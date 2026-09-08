@@ -159,3 +159,21 @@ Espérance calculée sur les tables réelles de ses 61 tirages effectifs :
 gains EuroDreams attendus 173,28 € + Joker+ hors jackpot 42,82 € = **215,91 €**
 attendus contre **231,90 €** encaissés, soit un ratio de **1,074**.
 TRJ de portefeuille attendu 30,78 % contre 33,06 % observé.
+
+## Application — `eurodreams_v3.html`
+
+Outil autonome (un seul fichier, aucune dépendance) recalibré sur les données
+officielles. Trois onglets : **Générateur**, **Bankroll**, **Données réelles**.
+
+Corrections apportées par rapport à la v2 :
+
+| v2 | v3 |
+|---|---|
+| Table de gains supposée (R3=500, R4=30, R5=5 fixes) | **table mesurée**, R3/R4/R5 parimutuels, sélecteur régime actuel / moyenne 297 tirages |
+| Mise de 11,50 € traitée comme « 4,6 grilles EuroDreams » | **4 grilles à 2,50 € + 1 Joker+ à 1,50 €**, deux jeux simulés séparément |
+| χ² à 39 ddl (seuil 54,6) | **loi nulle corrigée** pour un tirage sans remise : E[χ²] = 34, seuil réel ≈ 47,5, + avertissement de puissance |
+| P(≥1 gain) par `1−(1−p)ⁿ` | **énumération exacte** des 3 838 380 tirages (l'approximation sous-estimait de 8,2 pts à 4 grilles) |
+| « espérance ≈ −48 % » | **44,31 % nominal / 39,19 % actualisé**, mesuré |
+| « l'écart aux 52 % vient de la réserve non redistribuée » | écart **mesuré** à −7,7 points, explication retirée |
+| Levier anti-partage présenté comme « le seul levier réel » | **plafonné et chiffré** : quelques dixièmes de point (mesuré +0,44 pt sur Joker+) |
+| — | onglet **Données réelles**, note sur le décalage J+1 des dates de débit, P(récupérer sa mise) exacte |
