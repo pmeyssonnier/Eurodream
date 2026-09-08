@@ -80,3 +80,32 @@ Conséquences :
    observée 17/61 = 27,87 % (test binomial p = 1,000).
 6. **Anomalie de calendrier** : 60 des 61 dates du joueur tombent un mardi ou un
    vendredi ; EuroDreams est tiré le lundi et le jeudi. À élucider.
+
+## Complément 2 — les tirages Joker+ (2011-2026) : uniformité et popularité
+
+16 fichiers de résultats (5 057 tirages : 6 chiffres + 1 signe du zodiaque),
+appariés aux données financières.
+
+**Le générateur est uniforme.** 30 342 chiffres tirés : χ² = 5,70 (9 ddl),
+p = 0,77 ; aucune position biaisée ; signes tirés χ² = 14,88 (11 ddl), p = 0,19.
+Ici le χ² classique est **valide** (tirage avec remise, chiffres indépendants),
+contrairement au cas EuroDreams. Puissance : un chiffre 10 % plus fréquent serait
+détecté dans **97 %** des cas, contre 5,5 % avec les 297 tirages EuroDreams.
+
+**Les grilles jouées, elles, ne sont pas uniformes.** Les comptages de gagnants
+sont sur-dispersés (Var(z) = 2,20 au rang 7 et 33,5 au rang 8, au lieu de 1),
+ce qui permet de reconstituer la distribution des grilles jouées sans y avoir accès :
+
+| dimension | amplitude max/min | le plus joué | le moins joué |
+|---|---|---|---|
+| Signe du zodiaque | **1,213×** | Lion (indice 1,110) | Capricorne (0,916) |
+| Chiffre, 1ʳᵉ position | 1,022× | 7 | 0 (z = −19,3) |
+| Chiffre, 6ᵉ position | 1,013× | 7 | 0 (z = −9,0) |
+
+Préférence **stable** sur 15 ans (Spearman entre 2011-2018 et 2019-2026 : ρ = +0,94).
+
+**Valeur du levier anti-partage, enfin chiffrée.** Seul le rang 1 du Joker+ est
+partagé (rangs 2 à 8 : montants fixes). Jouer le profil le moins populaire plutôt
+que le plus populaire vaut au mieux **+0,44 à +0,57 point de TRJ**, contre 46,80 %
+de TRJ hors jackpot. La conclusion A de l'audit est donc **validée empiriquement
+pour la première fois — et simultanément réduite à une quantité négligeable.**
