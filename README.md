@@ -356,3 +356,42 @@ Corrélation entre la fréquence publiée et la popularité mesurée auprès des
 (via le rang 8) : **Spearman ρ = +0,249, p = 0,436**. Capricorne est le 2ᵉ signe le
 plus sorti et le **moins joué** (indice 0,916) ; Lion est le plus joué (1,110) et
 seulement 3ᵉ au palmarès. La préférence des joueurs a une autre origine.
+
+## v5 — onglet « Popularité » (`eurodreams_v5.html`)
+
+Cinquième onglet de l'application, qui rassemble les trois résultats mesurés sur la
+manière dont les joueurs choisissent leurs grilles. Données produites par
+`scripts/16_donnees_v5_popularite.py` → `out/v5_popularite.json`, embarquées en dur.
+
+**1. Sur-dispersion du nombre de gagnants (297 tirages EuroDreams).** Si les grilles
+étaient tirées au sort, le nombre de gagnants par rang suivrait une binomiale exacte
+`B(n, p)` et les résidus standardisés `z = (k − np)/√(np(1−p))` auraient une variance
+de 1. Mesuré : **1,85** (rang 3), **8,31** (rang 4), **33,49** (rang 5), **54,22**
+(rang 6). Témoin : le Joker+, dont les numéros sont imprimés sur le ticket et non
+choisis, donne **2,20**. L'écart entre les deux jeux est la signature du choix humain.
+
+**2. Borne du levier anti-partage (déciles de fréquentation).** Les 297 tirages sont
+classés par encombrement (résidu du rang 6) ; on calcule pour chaque décile
+l'espérance de gain d'une grille, `Σ p_r × W_r`, où seuls les lots parimutuels bougent.
+Résultat : **D1 = 31,63 %** de TRJ contre **28,46 %** en moyenne et **25,72 %** en D10,
+soit une amplitude de **5,91 points** et une borne supérieure de **+3,17 points**.
+Cette borne est inatteignable : l'encombrement dépend des numéros sortis, pas de la
+grille. Le levier réellement mesurable (Joker+, 642 M de grilles) vaut **+0,44 point**,
+au mieux **+0,57 point** en combinant signe et chiffres.
+
+*Correction :* la valeur de +2,89 points annoncée au tour précédent était erronée ;
+le calcul par déciles refait ici donne **+3,17 points**.
+
+**3. Les joueurs ne suivent pas les statistiques officielles.** Nuage de points
+« sorties publiées par la Loterie » × « part réellement jouée » (mesurée par le rang 8
+du Joker+, bon signe seul), sur les 5 050 tirages de la feuille officielle.
+**Spearman ρ = +0,249 (p = 0,436)** : aucune relation. Capricorne est le 2ᵉ signe le
+plus sorti et le moins joué (0,916) ; Lion est le plus joué (1,110) et seulement 3ᵉ au
+palmarès. La popularité est culturelle, donc stable (ρ = +0,944 entre 2011-2018 et
+2019-2026) — donc exploitable durablement, contrairement à un biais de tirage qui
+n'existe pas.
+
+Graphiques : barres horizontales en échelle logarithmique (sur-dispersion), barres
+divergentes autour de la moyenne (déciles), nuage de points avec étiquetage
+non chevauchant (signes). Palette de marques `#3987e5` / `#d95926` validée sur la
+surface `#0d1117` (bande de clarté OKLCH, ΔE CVD 26,8, contraste ≥ 3:1).

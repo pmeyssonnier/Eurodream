@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EuroDreams v3 — Générateur, Bankroll & Données réelles</title>
+<style>
+:root{--bg:#11151c;--card:#1a212c;--line:#2b3648;--txt:#e6edf5;--mut:#8b9bb4;--acc:#4da3ff;--ok:#3ddc97;--bad:#ff6b6b;--warn:#ffb454;--surf:#0d1117;--grid:#1e2635;--s1:#3987e5;--s2:#d95926}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+h1{font-size:19px;margin:0 0 4px}h2{font-size:15px;margin:0 0 10px;color:var(--acc)}
+h3{font-size:13px;margin:14px 0 6px;color:var(--warn)}
+.sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 4px}
+input,select,button{font:inherit;background:#0d1117;color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%}
+button{background:var(--acc);color:#03121f;border:0;font-weight:600;cursor:pointer;margin-top:12px}
+button.sec{background:#243044;color:var(--txt)}
+button.dgr{background:#3a2027;color:#ffb0b0}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{margin:0;background:#243044;color:var(--mut);padding:8px 6px;font-size:13px}
+.tabs button.on{background:var(--acc);color:#03121f}
+.grille{border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:9px;background:#141a24}
+.balls{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.b{width:36px;height:36px;border-radius:50%;background:#22304a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.b.hi{background:#2f5d3f;color:#c9ffe2}.b.dream{background:var(--warn);color:#241a00}
+.meta{font-size:12px;color:var(--mut);margin-top:7px}
+.tag{display:inline-block;background:#2a2130;color:#ffb0b0;border-radius:5px;padding:1px 6px;margin:2px 4px 0 0;font-size:11px}
+.bar{height:9px;background:#0d1117;border-radius:5px;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%;background:var(--acc)}
+.freq{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-size:11px}
+.warn{background:#2a1f14;border-color:#5a4326;color:#ffd8a8;font-size:13px}
+.fix{background:#14231c;border-color:#2c5340;color:#c9ffe2;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 4px;text-align:right;border-bottom:1px solid var(--line)}
+th{color:var(--mut);font-weight:500;font-size:11px}td:first-child,th:first-child{text-align:left}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.kpi div{background:#141a24;border:1px solid var(--line);border-radius:8px;padding:8px}
+.kpi b{display:block;font-size:18px;margin-top:2px}
+.pos{color:var(--ok)}.neg{color:var(--bad)}.mut{color:var(--mut)}
+canvas{width:100%;height:190px;display:block;background:var(--surf);border-radius:8px;margin-top:6px}
+/* --- data-viz : couleurs de MARQUES validées pour la surface #0d1117
+   (bande de clarté OKLCH 0,48-0,67 · ΔE CVD 26,8 · contraste >= 3:1) --- */
+.viz{position:relative}
+canvas.viz-cv{height:230px;touch-action:none;cursor:crosshair}
+.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mut);margin:8px 0 2px}
+.lg span{display:flex;align-items:center;gap:5px}
+.lg i{display:block;width:14px;height:2px;border-radius:1px;background:var(--s1)}
+.lg i.dot{width:8px;height:8px;border-radius:50%;background:var(--s2)}
+.lg i.ref{background:var(--grid);height:1px;width:14px}
+.lg i.dot2{width:8px;height:8px;border-radius:50%;background:var(--s1)}
+.lg i.bar1{width:14px;height:9px;border-radius:2px;background:var(--s1)}
+.lg i.bar2{width:14px;height:9px;border-radius:2px;background:var(--s2)}
+.lg i.zone{background:rgba(139,155,180,.16);height:12px;width:14px;border-radius:2px}
+#tip{position:fixed;z-index:9;pointer-events:none;display:none;background:#0b0f16;
+  border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:12px;
+  color:var(--txt);box-shadow:0 6px 20px #0008;max-width:230px}
+#tip b{font-size:14px}#tip em{color:var(--mut);font-style:normal;font-size:11px}
+#tip .k{display:inline-block;width:12px;height:2px;border-radius:1px;vertical-align:middle;margin-right:5px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.tiles div{background:#141a24;border:1px solid var(--line);border-radius:8px;padding:9px}
+.tiles b{display:block;font-size:19px;margin-top:2px}
+.tiles em{font-style:normal;color:var(--mut);font-size:11px;display:block;margin-top:2px}
+.x{cursor:pointer;color:var(--bad);font-weight:700;padding:0 6px}
+.hide{display:none}
+code{background:#0d1117;padding:1px 4px;border-radius:4px;font-size:12px}
+.del{text-decoration:line-through;color:var(--bad)}
+</style>
+</head>
+<body>
+
+<h1>EuroDreams — Générateur, Bankroll &amp; Données réelles</h1>
+<div class="sub">v5 · 6/40 + 1 Dream/5 · 19 191 900 combinaisons · calibré sur les
+<b>297 tirages officiels</b> du 06/11/2023 au 07/09/2026 (140,7 M€ misés)</div>
+
+<div class="tabs">
+  <button class="on" data-t="gen">Générateur</button>
+  <button data-t="bank">Bankroll</button>
+  <button data-t="data">Données</button>
+  <button data-t="cag">Cagnotte</button>
+  <button data-t="pop">Popularité</button>
+</div>
+
+<!-- ================= GÉNÉRATEUR ================= -->
+<div id="tab-gen">
+
+<div class="card warn">
+<b>Ce que fait cet outil — et ce qu'il ne fait pas.</b>
+Il ne prédit rien : les 19 191 900 combinaisons sont équiprobables.
+Il ne modifie pas votre espérance de gain : elle vaut <b>44,3 %</b> de la mise (nominal)
+ou <b>39,2 %</b> actualisée à 3 %, quelle que soit la grille cochée.
+<h3>Le levier « anti-partage » est réel mais dérisoire — mesuré</h3>
+Sur les 297 tirages officiels : le rang 6 (18,1 % de la mise) est <b>fixe à 2,50 €</b>,
+donc insensible au partage. Les rangs 3, 4 et 5 sont parimutuels mais comptent
+en médiane <b>10, 385 et 5 366 gagnants</b> par tirage : votre grille change
+le diviseur d'une unité, soit un effet compris entre 0,02 % et 10 %
+sur les <b>10,2 %</b> de mise qu'ils représentent. Aucun tirage n'a jamais montré
+2 gagnants au rang 1 ou 2. Plafond du levier : <b>quelques dixièmes de point de TRJ</b>.
+Mesuré sur un jeu comparable (Joker+, 642 M de grilles) : <b>+0,44 point</b>.
+<br><br>Le seul levier qui compte reste le montant misé.
+</div>
+
+<div class="card">
+<h2>1. Historique (optionnel)</h2>
+<label>Fichiers CSV de tirages (Date;Numéro 1;…;DreamNumber)</label>
+<input type="file" id="csv" multiple accept=".csv">
+<div id="stats" class="meta"></div>
+</div>
+
+<div class="card">
+<h2>2. Paramètres</h2>
+<div class="row">
+  <div><label>Nb de grilles</label><input type="number" id="nGrilles" value="1" min="1" max="30"></div>
+  <div><label>Sévérité anti-partage</label>
+    <select id="sev"><option value="0">Aucune (pur hasard)</option><option value="1">Modérée</option><option value="2" selected>Forte</option><option value="3">Maximale</option></select></div>
+</div>
+<div class="row">
+  <div><label>Stratégie</label>
+    <select id="strat"><option value="disj" selected>Disjointes</option><option value="libre">Indépendantes</option></select></div>
+  <div><label>Dream</label>
+    <select id="dreamMode"><option value="rand" selected>Aléatoire</option><option value="spread">Étalé 1–5</option></select></div>
+</div>
+<button id="go">Générer</button>
+<button id="copy" class="sec">Copier les grilles</button>
+</div>
+
+<div id="out"></div>
+</div>
+
+<!-- ================= BANKROLL ================= -->
+<div id="tab-bank" class="hide">
+
+<div class="card fix">
+<b>Corrigé en v3.</b> Le Joker+ n'est plus fondu dans la mise EuroDreams.
+Une mise de 11,50 € = <b>4 grilles à 2,50 € + 1 Joker+ à 1,50 €</b>, deux jeux
+aux rendements très différents (44,3 % contre 52,4 %). La v2 la traitait comme
+« 4,6 grilles EuroDreams », ce qui faussait la simulation.
+<br><br><b>Dates.</b> EuroDreams est tiré le <b>lundi et le jeudi</b> (149 et 148 tirages
+sur 297). Si votre relevé est daté mardi/vendredi, ce sont des dates de
+<b>débit</b> : le tirage du lundi est réglé le mardi. Décalage J+1, sans conséquence
+sur les statistiques.
+</div>
+
+<div class="card">
+<h2>Saisie d'un tirage</h2>
+<div class="row">
+  <div><label>Date</label><input type="date" id="bDate"></div>
+  <div><label>Grilles ED</label><input type="number" id="bK" value="4" min="0" max="30"></div>
+</div>
+<div class="row">
+  <div><label>Joker+ (1,50 €)</label><select id="bJ"><option value="1" selected>Oui</option><option value="0">Non</option></select></div>
+  <div><label>Gain encaissé (€)</label><input type="number" id="bGain" step="0.10" value="0"></div>
+</div>
+<div class="meta" id="bMiseCalc"></div>
+<button id="bAdd">Ajouter</button>
+<div class="row">
+  <button id="bDemo" class="sec">Charger les 61 tirages</button>
+  <button id="bClear" class="dgr">Tout effacer</button>
+</div>
+</div>
+
+<div class="card" id="bKpi"></div>
+
+<div class="card">
+<h2>Solde cumulé</h2>
+<canvas id="cCum"></canvas>
+<div class="meta">Ligne blanche = solde réel. Zone bleue = enveloppe P5–P95 simulée sous
+les règles réelles du jeu (EuroDreams + Joker+). Pointillé orange = espérance.</div>
+</div>
+
+<div class="card">
+<h2>Taux de retour cumulé</h2>
+<canvas id="cTrj"></canvas>
+<div class="meta">Convergence de <code>gains / mises</code>. Pointillé = TRJ théorique du
+portefeuille. Les 50 premiers points ne veulent rien dire : l'IC à 95 % sur 61 tirages
+fait <b>24,6 points</b> de large.</div>
+</div>
+
+<div class="card">
+<h2>Position vs. hasard pur</h2>
+<div id="bMc" class="meta"></div>
+</div>
+
+<div class="card">
+<h2>Paramètres du modèle</h2>
+<div class="row">
+  <div><label>Table de gains</label>
+    <select id="pTable">
+      <option value="rec" selected>Régime actuel (dep. 10/2025)</option>
+      <option value="all">Moyenne 297 tirages</option>
+      <option value="v2">Table supposée v2 (obsolète)</option>
+    </select></div>
+  <div><label>Rente rang 1</label>
+    <select id="pRente">
+      <option value="nom" selected>Nominale (7 200 000 €)</option>
+      <option value="act">Actualisée 3 % (4 743 788 €)</option>
+    </select></div>
+</div>
+<div class="row">
+  <div><label>Prix d'une grille (€)</label><input type="number" id="pGrille" step="0.10" value="2.50"></div>
+  <div><label>Simulations</label><input type="number" id="pSim" value="4000" step="1000"></div>
+</div>
+<label>Cagnotte Joker+ au moment de jouer — <b id="pJkLab">800 000 €</b></label>
+<input type="range" id="pJk" min="200000" max="3125000" step="100000" value="800000" style="padding:0">
+<div class="meta" id="pJkTrj"></div>
+<label>Gains par rang (€) — parimutuels pour les rangs 3 à 5</label>
+<table id="tRangs"></table>
+<button id="bRecalc" class="sec">Recalculer</button>
+<div id="bEv" class="meta"></div>
+</div>
+
+<div class="card">
+<h2>Historique saisi</h2>
+<table id="tBank"></table>
+</div>
+</div>
+
+<!-- ================= DONNÉES RÉELLES ================= -->
+<div id="tab-data" class="hide">
+<div class="card"><h2>Ce que disent les 297 tirages officiels</h2>
+<div class="meta">140,7 M€ misés · 56,3 M de grilles · 189 482 grilles par tirage en moyenne</div>
+<table id="tFacts"></table>
+</div>
+
+<div class="card"><h2>Table de gains : supposé vs réel</h2>
+<table id="tCmp"></table>
+<div class="meta">Les rangs 3, 4 et 5 ne sont <b>pas fixes</b> : ils sont parimutuels.
+Le rang 4 varie de 17,40 € à 65,70 €, le rang 3 de 34,70 € à 990,50 €.</div>
+</div>
+
+<div class="card warn"><h2 style="color:var(--warn)">Le « changement » d'octobre 2025</h2>
+La médiane du rang 3 passe de <b>103,10 €</b> à <b>496,00 €</b> — multipliée par cinq.
+Mais le TRJ des rangs 3 à 6 reste à <b>28,5 %</b> : c'est une réallocation
+financée par le rang 4 (40,60 € → 33,80 €). <b>Effet nul pour le joueur.</b>
+</div>
+
+<div class="card"><h2>P(au moins un rang gagnant) — exact</h2>
+<table id="tP1"></table>
+<div class="meta">Par énumération des 3 838 380 tirages, pour des grilles disjointes.
+La formule <code>1−(1−p)ⁿ</code> utilisée en v2 suppose l'indépendance : elle
+<b>sous-estime</b> de 8 points à 4 grilles, parce que des grilles disjointes ont des
+résultats négativement corrélés.</div>
+</div>
+
+<div class="card"><h2>P(récupérer sa mise sur un tirage) — exact</h2>
+<table id="tPM"></table>
+<div class="meta">Avec la table réelle, un rang 5 vaut <b>4,93 €</b> : il ne couvre plus
+une mise de 2 grilles (5,00 €). D'où la chute entre 1 et 3 grilles, puis la remontée.
+Le phénomène tient au rapport rang 5 / mise unitaire, pas aux rangs 3 et 4.</div>
+</div>
+
+<div class="card"><h2>Taux de retour</h2>
+<table id="tTrj"></table>
+<div class="meta">L'écart avec les 52 % annoncés est <b>mesuré</b>, pas supposé.</div>
+</div>
+</div>
+
+
+<!-- ================= CAGNOTTE JOKER+ ================= -->
+<div id="tab-cag" class="hide">
+
+<div class="card">
+<h2>Le seul levier qui vaut plus qu'un dixième de point</h2>
+<div class="meta">Le rang 1 du Joker+ <b>s'accumule</b> tant qu'il n'est pas touché — contrairement
+à EuroDreams, où il n'y a jamais de report. Les rangs 2 à 8 étant à montants fixes, tout
+le TRJ variable du Joker+ tient dans cette seule cagnotte :
+<br><br><b style="color:var(--txt)">TRJ = 46,80 % + cagnotte × 5,92 points par million d'euros</b>
+<br><br>Jouer quand la cagnotte est haute est gratuit et vaut jusqu'à <b>+14 points de TRJ</b>.
+Aucun autre levier de tout l'audit n'approche cet ordre de grandeur.</div>
+</div>
+
+<div class="tiles" id="cTiles"></div>
+
+<div class="card">
+<h2>La cagnotte au fil du temps</h2>
+<div class="lg"><span><i></i>cagnotte en cours <em>(mesurée)</em></span>
+  <span><i class="dot"></i>jackpot touché</span>
+  <span><i class="ref"></i>plafond 2,5 M € (depuis 2016)</span>
+  <span><i class="zone"></i>cagnotte en cours non publiée</span></div>
+<div class="viz"><canvas id="cvCag" class="viz-cv"></canvas></div>
+<div class="meta" id="cagNote"></div>
+</div>
+
+<div class="card">
+<h2>Où se situe la cagnotte, et ce que ça vaut</h2>
+<div class="meta" style="margin:0 0 8px">Part des tirages passés dans chaque tranche, et TRJ
+moyen qu'elle implique. Lecture : la cagnotte passe l'essentiel de son temps en bas.</div>
+<div class="viz"><canvas id="cvTr" class="viz-cv" style="height:250px"></canvas></div>
+</div>
+
+<div class="card">
+<h2>Tableau</h2>
+<table id="tCag"></table>
+<div class="meta" id="cagSrc"></div>
+</div>
+
+<div class="card warn">
+<b>La borne dure n'a pas bougé.</b> L'espérance ne devient nulle qu'à une cagnotte de
+<b id="cagSeuil"></b> — soit <b id="cagRatio"></b> fois le maximum jamais atteint en
+seize ans, et 3,6 fois le plafond actuel. Le Joker+ passe de « très mauvais » à
+« moins mauvais » : <b>il n'existe aucune fenêtre à espérance positive</b>.
+</div>
+</div>
+
+<!-- ================= POPULARITÉ ================= -->
+<div id="tab-pop" class="hide">
+
+<div class="card">
+<h2>Les joueurs ne cochent pas au hasard — et c'est mesurable</h2>
+<div class="meta">Trois résultats indépendants, tous tirés des fichiers officiels, jamais
+supposés. Ils bornent enfin par le haut le seul levier « de grille » qui existe :
+<b>éviter les combinaisons que les autres jouent</b>.
+<br><br>Ce n'est pas une opinion sur le comportement des joueurs : c'est une conséquence
+arithmétique. Si les 56,3 M de grilles EuroDreams étaient tirées au sort, le nombre de
+gagnants par rang suivrait une binomiale exacte, dont les résidus auraient une variance
+de <b>1</b>. Elle vaut <b id="pVarMax"></b> au rang 6.</div>
+</div>
+
+<div class="tiles" id="pTiles"></div>
+
+<div class="card">
+<h2>1. Preuve : la sur-dispersion du nombre de gagnants</h2>
+<div class="lg"><span><i class="bar1"></i>EuroDreams <em>(numéros cochés)</em></span>
+  <span><i class="bar2"></i>Joker+ <em>(numéros imprimés, non choisis)</em></span>
+  <span><i class="ref"></i>variance 1 = grilles tirées au sort</span></div>
+<div class="viz"><canvas id="cvVar" class="viz-cv" style="height:210px"></canvas></div>
+<div class="meta">Échelle logarithmique. Plus le rang est fréquent, plus la sur-dispersion
+est nette : au rang 6 le nombre de gagnants fluctue <b id="pSdMax"></b> fois plus que
+le hasard ne l'autorise. Le Joker+, où les numéros sont <b>imprimés sur le ticket</b>
+et non choisis, sert de témoin : Var(z) = 2,20. L'écart entre les deux jeux est la
+signature du choix humain.</div>
+</div>
+
+<div class="card">
+<h2>2. Ce que ça vaut : les déciles de fréquentation</h2>
+<div class="meta" style="margin:0 0 6px">On classe les <b id="pNed"></b> tirages par
+encombrement (résidu du rang 6) et on calcule ce qu'une grille aurait rapporté dans
+chacun : les probabilités de gain ne bougent pas, seuls les <b>lots parimutuels</b>
+changent, parce qu'ils sont divisés par le nombre de gagnants.</div>
+<div class="lg"><span><i class="bar1"></i>TRJ des rangs 3 à 6</span>
+  <span><i class="ref"></i>moyenne <b id="pMoyLg"></b></span></div>
+<div class="viz"><canvas id="cvDec" class="viz-cv" style="height:250px"></canvas></div>
+<div class="meta"><b>D1</b> = les tirages où les joueurs étaient le moins nombreux à
+avoir coché la bonne zone (lots les plus gros) ; <b>D10</b> = les plus encombrés.
+Amplitude totale : <b id="pAmp"></b>.</div>
+</div>
+
+<div class="card warn">
+<h3 style="color:var(--warn);margin-top:0">La borne dure du levier anti-partage</h3>
+Tomber systématiquement dans le décile le moins fréquenté rapporterait
+<b id="pBorne"></b> de TRJ sur les rangs 3 à 6, soit <b id="pGain"></b> par rapport à
+la moyenne de <b id="pMoy"></b>.
+<br><br><b>Et c'est inatteignable</b>, pour une raison structurelle : l'encombrement d'un
+tirage dépend des <i>numéros sortis</i>, pas de votre grille. Vous ne pouvez pas choisir
+d'être dans D1 — vous pouvez seulement, en évitant les zones populaires, y être un peu
+plus souvent que la moyenne. Le levier réel est une <b>fraction</b> de ces
+<b id="pGain2"></b>, et il ne touche que les <b>10,2 %</b> de mise que représentent
+les rangs parimutuels 3, 4 et 5 : le rang 6 (18,2 % de la mise) est fixe à 2,50 €,
+donc totalement insensible au partage.
+<br><br>Mesuré sur un jeu où c'est isolable (Joker+, 642 M de grilles) :
+<b>+0,44 point</b>, au mieux <b>+0,57 point</b> en combinant signe et chiffres.
+</div>
+
+<div class="card">
+<h2>3. Les joueurs suivent-ils les statistiques officielles ? Non.</h2>
+<div class="meta" style="margin:0 0 6px">La Loterie publie un « palmarès » des signes du
+zodiaque du Joker+ (<b id="pNjk"></b> tirages). On peut mesurer indépendamment la part
+<b>réellement jouée</b> de chaque signe, via le rang 8 (bon signe seul). Si les joueurs
+suivaient le palmarès, les deux se répondraient.</div>
+<div class="lg"><span><i class="dot2"></i>un signe du zodiaque</span>
+  <span><i class="ref"></i>attendu : 420,8 sorties · indice 1,000</span></div>
+<div class="viz"><canvas id="cvSig" class="viz-cv" style="height:280px"></canvas></div>
+<div class="meta" id="pSigNote"></div>
+<div class="meta">Les signes que l'encombrement empêche d'étiqueter apparaissent au survol du point.</div>
+</div>
+
+<div class="card">
+<h2>Tableau</h2>
+<table id="tSig"></table>
+<div class="meta">L'indice joué est le rapport entre la part de grilles portant ce signe
+et 1/12. Il est stable dans le temps : la corrélation des parts jouées entre 2011-2018
+et 2019-2026 vaut <b>ρ = +0,944</b> — une préférence culturelle, donc exploitable
+durablement, contrairement à un biais de tirage qui n'existe pas.</div>
+</div>
+
+<div class="card fix">
+<b>Conclusion opérationnelle.</b> Le seul levier de grille validé empiriquement l'est
+aussi <b>borné</b> : quelques dixièmes de point. Il faut jouer impopulaire non pas
+parce que certaines combinaisons « sortent plus », mais parce que les lots parimutuels
+se divisent. À côté du levier « cagnotte Joker+ haute » (+14 points), c'est du bruit —
+et le seul vrai levier reste le montant misé.
+</div>
+</div>
+
+
+<script>
+"use strict";
+
+/* ==================== CONSTANTES MESURÉES ==================== */
+const C40_6 = 3838380, C_TOT = 19191900;
+const PROBA = [1/C_TOT, 4/C_TOT, 204/C40_6, 8415/C40_6, 119680/C40_6, 695640/C40_6];
+const NOMS  = ['Rang 1 — 6 n° + Dream','Rang 2 — 6 n°','Rang 3 — 5 n°',
+               'Rang 4 — 4 n°','Rang 5 — 3 n°','Rang 6 — 2 n°'];
+const RENTE_NOM = 7200000, RENTE_ACT = 4743788;
+/* tables de gains : mesurées sur les données officielles */
+const TABLES = {
+  rec: [RENTE_NOM, 120000, 500.42, 33.85, 4.93, 2.50],   // régime dep. 10/2025
+  all: [RENTE_NOM, 120000, 237.02, 38.75, 5.16, 2.50],   // moyenne 297 tirages
+  v2 : [RENTE_NOM, 120000, 500.00, 30.00, 5.00, 2.50]    // table supposée (obsolète)
+};
+/* nb médian de gagnants par tirage (297 tirages) */
+const NGAG_MED = [0, 0, 10, 385, 5366, 31371];
+/* P(>=1 rang gagnant), k grilles DISJOINTES — énumération exacte */
+const P1_EXACT = [0.214658, 0.402560, 0.564586, 0.701614, 0.814523, 0.904194];
+/* P(gain >= mise) sur un tirage, table du régime actuel — énumération + convolution */
+const PMISE_SANS = [0.214658, 0.031130, 0.007929, 0.008983, 0.011229, 0.013474];
+const PMISE_AVEC = [0.097460, 0.034799, 0.015052, 0.011807, 0.013237, 0.015446];
+/* loi exacte du gain d'une grille Joker+ à 1,50 € (reconstituée sur 642 M grilles) */
+/* ---- loi exacte du gain d'une grille Joker+ (1,50 €), CONSTRUITE depuis les
+   paramètres mesurés sur 642 M de grilles : 6 chiffres alignés par l'une des deux
+   extrémités (p = 2 × 0,9 × 10⁻ᵏ) + 1 signe du zodiaque sur 12, lot cumulatif.
+   La cagnotte du rang 1 est un paramètre : setJackpot() reconstruit la loi.      */
+const P_R1_JK = 8.877052e-08, P_R2_JK = 9.500003e-07, TRJ_JK_HJ = 0.468010;
+const trjJk = J => TRJ_JK_HJ + P_R1_JK * J / 1.5;   /* 5,92 pt par million d'euros */
+let JK_V = [], JK_P = [];
+function setJackpot(J) {
+  const m = new Map(), add = (pr, v) => m.set(v, (m.get(v) || 0) + pr);
+  const dig = [[0.18, 2], [0.018, 5], [0.0018, 20], [0.00018, 200], [0.000018, 2000]];
+  const pSig = 1 / 12;
+  add(P_R1_JK, J); add(P_R2_JK, 20000);          /* 6 chiffres, avec / sans le signe */
+  let pDig = P_R1_JK + P_R2_JK;
+  dig.forEach(([pr, v]) => { add(pr * pSig, v + 1.5); add(pr * (1 - pSig), v); pDig += pr; });
+  const pRien = 1 - pDig;                         /* aucun chiffre : signe seul, ou rien */
+  add(pRien * pSig, 1.5); add(pRien * (1 - pSig), 0);
+  const e = [...m.entries()].sort((a, b) => a[0] - b[0]);
+  JK_V = e.map(x => x[0]); JK_P = e.map(x => x[1]);
+}
+setJackpot(800000);
+
+/* ===== CAGNOTTE JOKER+ — données officielles =====
+   serie  : [date, cagnotte] — un point par palier, fenêtre où la cagnotte en cours
+            est publiée (2011-02-02 → 2016-01-24, 1 178 tirages)
+   gains  : [date, montant par gagnant, nb de gagnants] — les 56 jackpots 2011-2026
+   tranches : [libellé, part des tirages, TRJ moyen de la tranche]                */
+const CAG = {"serie":[["2011-02-02",200000],["2011-02-09",275000],["2011-02-16",200000],["2011-02-23",275000],["2011-03-02",350000],["2011-03-07",425000],["2011-03-14",500000],["2011-03-21",575000],["2011-03-28",650000],["2011-04-04",725000],["2011-04-11",800000],["2011-04-18",875000],["2011-04-25",950000],["2011-05-02",1025000],["2011-05-09",1100000],["2011-05-13",200000],["2011-05-16",275000],["2011-05-23",350000],["2011-05-25",200000],["2011-05-30",275000],["2011-06-06",350000],["2011-06-13",425000],["2011-06-20",500000],["2011-06-27",575000],["2011-07-04",650000],["2011-07-11",725000],["2011-07-18",800000],["2011-07-25",875000],["2011-08-01",950000],["2011-08-08",1025000],["2011-08-15",1100000],["2011-08-22",1175000],["2011-08-29",1250000],["2011-09-05",1325000],["2011-09-12",1400000],["2011-09-19",1475000],["2011-09-26",1550000],["2011-10-04",1625000],["2011-10-11",1700000],["2011-10-18",1775000],["2011-10-25",1850000],["2011-10-28",200000],["2011-11-01",275000],["2011-11-08",350000],["2011-11-15",425000],["2011-11-22",500000],["2011-11-29",575000],["2011-12-06",650000],["2011-12-13",725000],["2011-12-20",200000],["2011-12-27",275000],["2012-01-03",350000],["2012-01-10",425000],["2012-01-17",500000],["2012-01-24",575000],["2012-01-31",650000],["2012-02-07",725000],["2012-02-14",800000],["2012-02-21",875000],["2012-02-24",200000],["2012-02-28",275000],["2012-03-06",350000],["2012-03-13",425000],["2012-03-20",500000],["2012-03-27",575000],["2012-04-03",650000],["2012-04-10",725000],["2012-04-17",800000],["2012-04-24",875000],["2012-05-01",950000],["2012-05-08",1025000],["2012-05-15",1100000],["2012-05-18",200000],["2012-05-22",275000],["2012-05-29",200000],["2012-06-05",275000],["2012-06-12",350000],["2012-06-19",425000],["2012-06-26",500000],["2012-07-03",575000],["2012-07-10",650000],["2012-07-17",725000],["2012-07-24",800000],["2012-07-31",875000],["2012-08-01",200000],["2012-08-07",275000],["2012-08-14",350000],["2012-08-21",425000],["2012-08-28",500000],["2012-09-04",575000],["2012-09-11",650000],["2012-09-18",725000],["2012-09-25",800000],["2012-10-02",875000],["2012-10-09",950000],["2012-10-16",1025000],["2012-10-23",200000],["2012-10-30",275000],["2012-11-06",350000],["2012-11-13",425000],["2012-11-20",500000],["2012-11-27",575000],["2012-12-04",650000],["2012-12-11",725000],["2012-12-18",800000],["2012-12-24",875000],["2012-12-31",950000],["2013-01-08",1025000],["2013-01-15",1100000],["2013-01-22",1175000],["2013-01-29",1250000],["2013-02-05",1325000],["2013-02-12",1400000],["2013-02-19",1475000],["2013-02-26",1550000],["2013-03-05",1625000],["2013-03-12",1700000],["2013-03-19",200000],["2013-03-26",275000],["2013-04-02",350000],["2013-04-09",425000],["2013-04-16",500000],["2013-04-23",575000],["2013-04-30",650000],["2013-05-07",725000],["2013-05-14",800000],["2013-05-21",875000],["2013-05-28",950000],["2013-06-04",1025000],["2013-06-11",1100000],["2013-06-18",1175000],["2013-06-25",1250000],["2013-07-02",1325000],["2013-07-09",1400000],["2013-07-16",1475000],["2013-07-23",1550000],["2013-07-30",1625000],["2013-08-06",1700000],["2013-08-13",1775000],["2013-08-20",1850000],["2013-08-27",1925000],["2013-09-03",2000000],["2013-09-10",2075000],["2013-09-17",2150000],["2013-09-24",2225000],["2013-10-01",2300000],["2013-10-08",2375000],["2013-10-15",2450000],["2013-10-22",2525000],["2013-10-26",200000],["2013-10-29",275000],["2013-11-05",350000],["2013-11-12",425000],["2013-11-19",500000],["2013-11-26",575000],["2013-12-03",650000],["2013-12-10",725000],["2013-12-17",800000],["2013-12-24",875000],["2013-12-31",950000],["2014-01-07",1025000],["2014-01-14",1100000],["2014-01-21",1175000],["2014-01-28",1250000],["2014-02-04",1325000],["2014-02-11",1400000],["2014-02-18",1475000],["2014-02-25",1550000],["2014-03-04",1625000],["2014-03-11",1700000],["2014-03-18",1775000],["2014-03-25",1850000],["2014-04-01",1925000],["2014-04-08",2000000],["2014-04-15",2075000],["2014-04-22",2150000],["2014-04-29",2225000],["2014-05-06",2300000],["2014-05-13",2375000],["2014-05-20",2450000],["2014-05-27",2525000],["2014-06-03",2600000],["2014-06-10",2675000],["2014-06-17",2750000],["2014-06-24",2825000],["2014-07-01",2900000],["2014-07-08",2975000],["2014-07-15",3050000],["2014-07-22",200000],["2014-07-29",275000],["2014-08-05",350000],["2014-08-12",425000],["2014-08-19",500000],["2014-08-26",575000],["2014-09-02",650000],["2014-09-09",725000],["2014-09-16",800000],["2014-09-23",875000],["2014-09-30",950000],["2014-10-07",1025000],["2014-10-14",1100000],["2014-10-21",1175000],["2014-10-28",1250000],["2014-11-04",1325000],["2014-11-11",1400000],["2014-11-18",1475000],["2014-11-25",1550000],["2014-12-02",1625000],["2014-12-09",1700000],["2014-12-16",1775000],["2014-12-23",1850000],["2014-12-30",1925000],["2015-01-06",2000000],["2015-01-13",2075000],["2015-01-20",2150000],["2015-01-27",2225000],["2015-02-03",2300000],["2015-02-10",2375000],["2015-02-17",2450000],["2015-02-24",2525000],["2015-03-03",2600000],["2015-03-10",2675000],["2015-03-17",2750000],["2015-03-24",2825000],["2015-03-31",2900000],["2015-04-07",2975000],["2015-04-14",3050000],["2015-04-20",3125000],["2015-05-02",200000],["2015-05-21",400000],["2015-06-21",600000],["2015-07-21",800000],["2015-08-21",1000000],["2015-09-21",1200000],["2015-10-21",1400000],["2015-10-24",800000],["2015-10-25",200000],["2015-11-21",400000],["2015-12-06",200000],["2015-12-21",400000],["2016-01-21",600000]],"gains":[["2011-02-12",275000,1],["2011-05-11",1100000,1],["2011-05-24",350000,1],["2011-10-26",1850000,1],["2011-12-17",725000,1],["2012-02-22",875000,1],["2012-05-16",1100000,1],["2012-05-26",275000,1],["2012-07-31",875000,1],["2012-10-20",1025000,1],["2013-03-16",1700000,1],["2013-10-25",2525000,1],["2014-07-19",3050000,1],["2014-07-22",200000,1],["2015-05-01",3125000,1],["2015-05-16",200000,1],["2015-10-24",800000,2],["2015-12-05",400000,1],["2016-12-24",2500000,1],["2017-03-21",800000,1],["2017-04-12",200000,1],["2017-09-16",1200000,1],["2017-11-04",600000,1],["2018-01-19",600000,1],["2018-05-18",1000000,1],["2018-09-10",1000000,1],["2018-11-09",600000,1],["2019-01-01",600000,1],["2019-05-21",1200000,1],["2019-08-27",800000,1],["2020-01-07",1000000,1],["2020-01-10",200000,1],["2020-02-21",600000,1],["2020-03-14",200000,1],["2021-01-08",2200000,1],["2021-03-02",600000,1],["2021-03-10",200000,1],["2021-04-13",400000,1],["2021-12-10",1800000,1],["2021-12-25",400000,1],["2022-01-05",200000,1],["2023-02-03",2500000,1],["2023-05-05",800000,1],["2023-10-06",1200000,1],["2023-12-06",600000,1],["2024-02-17",600000,1],["2024-03-01",400000,1],["2024-07-12",1000000,1],["2024-08-28",600000,1],["2024-11-26",800000,1],["2025-02-01",600000,1],["2025-07-12",1200000,1],["2025-08-15",400000,1],["2025-11-19",800000,1],["2026-03-06",1000000,1],["2026-08-12",1200000,1]],"tranches":[["0.0\u20130.4 M",0.1732,0.4831],["0.4\u20130.8 M",0.2852,0.4998],["0.8\u20131.2 M",0.2165,0.524],["1.2\u20131.6 M",0.1171,0.5483],["1.6\u20132.0 M",0.0696,0.5719],["2.0\u20132.5 M",0.0713,0.5997],["2.5\u20133.2 M",0.0671,0.6354]],"pct":{"P0":200000,"P5":200000,"P10":275000,"P25":425000,"P50":800000,"P75":1400000,"P90":2225000,"P95":2675000,"P100":3125000},"moy":1031515,"seuil":8989301,"cap":2500000,"maxhist":3125000,"nvis":1178};
+const JK_MISE = 1.50, JK_TRJ = 0.5239, JK_TRJ_HJ = 0.4680;
+const ED_MESURE = {global:0.397871, horsR12:0.284430, nominal:0.443116,
+                   actualise:0.391924, annonce:0.52, tirages:297,
+                   mise:140.7, grilles:56.3, gpt:189482};
+
+/* ==================== ONGLETS ==================== */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  ['gen','bank','data','cag','pop'].forEach(t =>
+    document.getElementById('tab-'+t).classList.toggle('hide', b.dataset.t !== t));
+  if (b.dataset.t === 'bank') renderBank();
+  if (b.dataset.t === 'data') renderData();
+  if (b.dataset.t === 'cag') renderCag();
+  if (b.dataset.t === 'pop') renderPop();
+});
+
+/* ==================== CHI2 BIEN CALIBRÉ ==================== */
+/* Q(a,x) = fonction de survie gamma régularisée (Numerical Recipes) */
+function gammaln(x){const c=[76.18009172947146,-86.50532032941677,24.01409824083091,
+  -1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];let y=x,t=x+5.5;
+  t-=(x+.5)*Math.log(t);let s=1.000000000190015;for(let j=0;j<6;j++)s+=c[j]/++y;
+  return -t+Math.log(2.5066282746310005*s/x);}
+function gammaQ(a,x){
+  if(x<0||a<=0)return NaN; if(x===0)return 1;
+  if(x<a+1){let ap=a,sum=1/a,del=sum;
+    for(let n=1;n<200;n++){ap++;del*=x/ap;sum+=del;if(Math.abs(del)<Math.abs(sum)*1e-12)break;}
+    return 1-sum*Math.exp(-x+a*Math.log(x)-gammaln(a));}
+  let b=x+1-a,c=1e300,d=1/b,h=d;
+  for(let i=1;i<200;i++){const an=-i*(i-a);b+=2;d=an*d+b;if(Math.abs(d)<1e-300)d=1e-300;
+    c=b+an/c;if(Math.abs(c)<1e-300)c=1e-300;d=1/d;const del=d*c;h*=del;
+    if(Math.abs(del-1)<1e-12)break;}
+  return Math.exp(-x+a*Math.log(x)-gammaln(a))*h;
+}
+const chi2sf = (x,df) => gammaQ(df/2, x/2);
+
+/* ==================== HISTORIQUE DE TIRAGES ==================== */
+let HIST = [], FREQ = new Array(41).fill(0);
+const SET_HIST = new Set();
+const key = a => a.join('-');
+
+document.getElementById('csv').addEventListener('change', async e => {
+  HIST = []; SET_HIST.clear(); FREQ = new Array(41).fill(0);
+  for (const f of e.target.files) {
+    const txt = (await f.text()).replace(/^﻿/, '');
+    txt.split(/\r?\n/).slice(1).forEach(l => {
+      const c = l.split(';'); if (c.length < 7) return;
+      const n = c.slice(1, 7).map(Number).sort((a, b) => a - b);
+      if (n.some(x => !x || x < 1 || x > 40)) return;
+      if (new Set(n).size !== 6) return;
+      HIST.push({ d: c[0], n, dream: +c[7] || 0 }); SET_HIST.add(key(n)); n.forEach(x => FREQ[x]++);
+    });
+  }
+  renderStats();
+});
+
+function renderStats() {
+  const el = document.getElementById('stats');
+  if (!HIST.length) { el.textContent = ''; return; }
+  const N = HIST.length, p = 6/40, exp = N * p;
+  let chi2 = 0; for (let i = 1; i <= 40; i++) chi2 += (FREQ[i] - exp) ** 2 / exp;
+  /* CALIBRATION CORRECTE : 6 numéros tirés SANS remise -> les comptages sont
+     négativement corrélés. E[chi2] = 40(1-p) = 34, pas 39 (le nb de ddl).
+     On approche la loi nulle par c*chi2_d en appariant moyenne et variance. */
+  const mu = 40 * (1 - p);   // 34 — et non 39
+  /* l'écart-type de la statistique ne dépend pratiquement pas de N (loi limite) ;
+     valeur obtenue par 200 000 simulations : 7,68. Valable pour N >~ 100. */
+  const sd = 7.68;
+  const c = (sd * sd) / (2 * mu), d = mu / c;
+  const pNaif = chi2sf(chi2, 39), pVrai = chi2sf(chi2 / c, d);
+  const seuilVrai = 47.5, verdict = v =>
+    v > 0.05 ? '<span style="color:var(--ok)">compatible avec l\'uniformité</span>'
+             : '<span style="color:var(--warn)">écart significatif</span>';
+  let h = `<b>${N} tirages</b> · attendu ${exp.toFixed(1)}/n°<br>
+    χ² observé = <b>${chi2.toFixed(1)}</b><br>
+    p corrigée (tirage sans remise) = <b>${pVrai.toFixed(4)}</b> → ${verdict(pVrai)}<br>
+    <span class="del">p naïve (χ² à 39 ddl) = ${pNaif.toFixed(4)}</span>
+    <span class="mut">— test mal calibré, utilisé en v2</span><br>
+    <span class="mut">E[χ²] sous H₀ = ${mu.toFixed(1)} (et non 39). Seuil 5 % réel ≈ ${seuilVrai}
+    au lieu de 54,6.</span>`;
+  if (N < 500) h += `<br><span style="color:var(--warn)">Puissance : avec ${N} tirages,
+    un numéro 10 % plus fréquent ne serait détecté que dans ~5 % des cas —
+    le niveau du test. « Pas de signal » ne veut rien dire ici.</span>`;
+  const max = Math.max(...FREQ.slice(1));
+  h += '<div class="freq" style="margin-top:8px">';
+  for (let i = 1; i <= 40; i++)
+    h += `<div>${i} <span style="color:#fff">${FREQ[i]}</span><div class="bar"><i style="width:${100*FREQ[i]/max}%"></i></div></div>`;
+  el.innerHTML = h + '</div>';
+}
+
+/* ==================== SCORING ANTI-PARTAGE ==================== */
+function score(c) {
+  let s = 100; const r = [];
+  const somme = c.reduce((a, b) => a + b, 0);
+  const hauts = c.filter(n => n > 31).length;
+  s += hauts * 9;
+  if (hauts === 0) { s -= 40; r.push("grille 'date de naissance' (aucun n° > 31)"); } else if (hauts === 1) s -= 8;
+  if (c.filter(n => n <= 12).length >= 4) { s -= 16; r.push("4+ numéros ≤ 12 (mois)"); }
+  const d = Math.abs(somme - 123);
+  if (d < 12) { s -= 14; r.push("somme très centrale (" + somme + ")"); }
+  else if (d > 62) { s -= 10; r.push("somme extrême (" + somme + ")"); } else s += 9;
+  let cons = 0; for (let i = 1; i < 6; i++) if (c[i] - c[i - 1] === 1) cons++;
+  if (cons >= 3) { s -= 32; r.push(cons + " paires consécutives"); } else if (cons === 2) s -= 9;
+  const pas = c[1] - c[0];
+  if (c.every((v, i) => i === 0 || v - c[i - 1] === pas)) { s -= 50; r.push("suite arithmétique"); }
+  for (const m of [2, 3, 5, 7]) if (c.every(n => n % m === 0)) { s -= 26; r.push("tous multiples de " + m); }
+  const diz = new Set(c.map(n => (n - 1) / 10 | 0)).size;
+  if (diz <= 2) { s -= 11; r.push("concentré sur " + diz + " dizaine(s)"); } else s += 6;
+  const t = {}; c.forEach(n => t[n % 10] = (t[n % 10] || 0) + 1);
+  if (Math.max(...Object.values(t)) >= 4) { s -= 16; r.push("4+ mêmes terminaisons"); }
+  const pairs = c.filter(n => n % 2 === 0).length;
+  if (pairs === 0 || pairs === 6) { s -= 12; r.push("tout pair / tout impair"); }
+  if (SET_HIST.has(key(c))) { s -= 22; r.push("combinaison déjà sortie"); }
+  return { s, r, somme, hauts, diz, cons, pairs };
+}
+
+const SEUILS = { 0: -1e9, 1: 100, 2: 118, 3: 132 };
+function tirage() {
+  const p = []; for (let i = 1; i <= 40; i++) p.push(i);
+  for (let i = 39; i > 0; i--) { const j = Math.random() * (i + 1) | 0;[p[i], p[j]] = [p[j], p[i]]; }
+  return p.slice(0, 6).sort((a, b) => a - b);
+}
+function generer(n, sev, strat, dreamMode) {
+  const seuil = SEUILS[sev], res = [], used = new Set(); let essais = 0;
+  while (res.length < n && essais < 400000) {
+    essais++; const c = tirage();
+    if (strat === 'disj' && c.some(x => used.has(x))) continue;
+    const sc = score(c); if (sc.s < seuil) continue;
+    if (res.some(g => g.c.filter(x => c.includes(x)).length > 4)) continue;
+    c.forEach(x => used.add(x)); res.push({ c, ...sc });
+  }
+  if (dreamMode === 'spread') {
+    const pool = []; while (pool.length < res.length) pool.push(1, 2, 3, 4, 5);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0;[pool[i], pool[j]] = [pool[j], pool[i]]; }
+    res.forEach((g, i) => g.dream = pool[i]);
+  } else res.forEach(g => g.dream = 1 + (Math.random() * 5 | 0));
+  return res;
+}
+
+let DERNIER = [];
+document.getElementById('go').onclick = () => {
+  const n = Math.max(1, Math.min(30, +nGrilles.value));
+  const g = generer(n, +sev.value, strat.value, dreamMode.value); DERNIER = g;
+  const out = document.getElementById('out');
+  if (!g.length) { out.innerHTML = '<div class="card warn">Aucune grille trouvée : assouplis la sévérité ou passe en « Indépendantes ».</div>'; return; }
+  let h = `<div class="card"><h2>${g.length} grille(s) — coût ${(g.length * 2.5).toFixed(2)} €</h2>`;
+  g.forEach((x, i) => {
+    h += `<div class="grille"><div class="balls">${x.c.map(v => `<span class="b${v > 31 ? ' hi' : ''}">${v}</span>`).join('')}
+      <span style="color:var(--mut)">·</span><span class="b dream">${x.dream}</span></div>
+      <div class="meta">#${i + 1} — impopularité <b>${x.s}</b> · somme ${x.somme} · ${x.hauts} n°&gt;31 · ${x.diz} dizaines
+      ${x.r.map(t => `<span class="tag">${t}</span>`).join('')}</div></div>`;
+  });
+  const u = new Set(); g.forEach(x => x.c.forEach(v => u.add(v)));
+  const disj = strat.value === 'disj' && g.length <= 6;
+  const p1 = disj ? P1_EXACT[g.length - 1] : 1 - Math.pow(1 - PROBA[5] - PROBA[4] - PROBA[3] - PROBA[2] - PROBA[1] - PROBA[0], g.length);
+  const pm = g.length <= 6 ? PMISE_SANS[g.length - 1] : null;
+  h += `<div class="meta">Couverture <b>${u.size}/40</b>.
+    P(≥1 rang gagnant) = <b>${(100 * p1).toFixed(2)} %</b>
+    ${disj ? '<span class="mut">(exact, énumération)</span>' : '<span class="mut">(approx. indépendance)</span>'}.
+    ${pm !== null ? `P(récupérer la mise sur un tirage) = <b>${(100 * pm).toFixed(2)} %</b>.` : ''}
+    P(rang 1) = ${g.length} sur 19 191 900.
+    <br>Espérance : <b>44,3 %</b> de la mise (nominal) / <b>39,2 %</b> actualisée à 3 %
+    — <b>identique pour toute grille</b>. Perte espérée
+    <b>${(g.length * 2.5 * (1 - 0.443116)).toFixed(2)} €</b> par tirage.</div></div>`;
+  out.innerHTML = h;
+};
+document.getElementById('copy').onclick = () => {
+  if (!DERNIER.length) return;
+  const t = DERNIER.map(x => x.c.join(' - ') + '  | Dream ' + x.dream).join('\n');
+  navigator.clipboard.writeText(t).then(() => alert('Copié :\n\n' + t), () => alert(t));
+};
+
+/* ==================== BANKROLL ==================== */
+const LS = 'eurodreams_bankroll_v3', LSR = 'eurodreams_rangs_v3';
+let BANK = JSON.parse(localStorage.getItem(LS) || 'null');
+if (!BANK) {   /* migration depuis la v2 : {d,m,g} -> {d,k,j,g} */
+  const old = JSON.parse(localStorage.getItem('eurodreams_bankroll_v1') || '[]');
+  BANK = old.map(x => {
+    const j = (Math.abs((x.m / 2.5) % 1) > 1e-9) ? 1 : 0;
+    return { d: x.d, k: Math.max(0, Math.round((x.m - j * JK_MISE) / 2.5)), j, g: x.g };
+  });
+}
+let RANGS = JSON.parse(localStorage.getItem(LSR) || 'null');
+function tableCourante() {
+  const t = TABLES[pTable.value] || TABLES.rec;
+  const r1 = pRente.value === 'act' ? RENTE_ACT : RENTE_NOM;
+  return [r1, t[1], t[2], t[3], t[4], t[5]];
+}
+if (!RANGS) RANGS = tableCourante();
+
+const save = () => { localStorage.setItem(LS, JSON.stringify(BANK)); localStorage.setItem(LSR, JSON.stringify(RANGS)); };
+const eur = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const pc  = v => (100 * v).toFixed(2).replace('.', ',') + ' %';
+const eur0 = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+const miseDe = x => x.k * (+pGrille.value || 2.5) + x.j * JK_MISE;
+
+function majMise() {
+  const m = (+bK.value || 0) * (+pGrille.value || 2.5) + (+bJ.value) * JK_MISE;
+  document.getElementById('bMiseCalc').innerHTML =
+    `Mise du tirage : <b>${eur(m)}</b> = ${bK.value} × ${eur(+pGrille.value || 2.5)}` +
+    (+bJ.value ? ` + ${eur(JK_MISE)} de Joker+` : '');
+}
+['bK','bJ','pGrille'].forEach(id => document.getElementById(id).addEventListener('input', majMise));
+
+document.getElementById('bAdd').onclick = () => {
+  const d = bDate.value || new Date().toISOString().slice(0, 10);
+  BANK.push({ d, k: +bK.value || 0, j: +bJ.value, g: +bGain.value || 0 });
+  BANK.sort((a, b) => a.d < b.d ? -1 : 1); save(); renderBank();
+};
+document.getElementById('bDemo').onclick = () => {
+  BANK = [['2025-09-05',7],['2025-09-09',0],['2025-09-12',2],['2025-09-16',2.5],['2025-09-19',4],
+  ['2025-09-23',4.5],['2025-09-26',0],['2025-09-30',5],['2025-10-03',0],['2025-10-07',0],
+  ['2025-10-10',2.5],['2025-10-14',4.5],['2025-10-17',2.5],['2025-10-21',0],
+  ['2025-11-07',2.5],['2025-11-11',2.5],['2025-11-14',2.5],['2025-11-18',1.5],['2025-11-21',2.5],
+  ['2025-11-25',0],['2025-11-28',0],['2025-12-02',6.5],['2025-12-05',7.3],['2025-12-09',11.7],
+  ['2025-12-12',7],['2025-12-16',1.5],['2025-12-19',4],['2025-12-30',0],['2026-01-02',4.5],
+  ['2026-01-06',7.5],['2026-01-09',2.5],['2026-01-13',2],['2026-01-16',0],['2026-01-20',0],
+  ['2026-01-27',2.5],['2026-01-30',2.5],['2026-02-03',9],['2026-02-06',2.5],['2026-02-10',0],
+  ['2026-02-13',0],['2026-02-17',0],['2026-04-27',4],['2026-04-28',7.5],['2026-05-01',0],
+  ['2026-05-05',0],['2026-05-08',5.5],['2026-05-12',2.5],['2026-05-15',2.5],['2026-05-22',2.5],
+  ['2026-05-26',0],['2026-05-29',10.4],['2026-06-02',2.5],['2026-06-05',5],['2026-06-09',38.5],
+  ['2026-06-12',2.5],['2026-06-16',20],['2026-06-19',2.5],['2026-06-23',2],['2026-06-26',0],
+  ['2026-06-30',2],['2026-07-03',5]].map(x => ({ d: x[0], k: 4, j: 1, g: x[1] }));
+  save(); renderBank();
+};
+document.getElementById('bClear').onclick = () => { if (confirm("Effacer tout l'historique ?")) { BANK = []; save(); renderBank(); } };
+document.getElementById('bRecalc').onclick = () => {
+  document.querySelectorAll('#tRangs input').forEach((inp, i) => RANGS[i] = +inp.value || 0);
+  save(); renderBank();
+};
+['pTable','pRente'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+  RANGS = tableCourante(); save(); renderBank();
+}));
+
+/* --- Monte Carlo : k grilles ED (+ éventuel Joker+) --- */
+function cumul(p) { const c = []; let a = 0; p.forEach(v => { a += v; c.push(a); }); return c; }
+const CUM_ED = cumul(PROBA);
+function tirerED() { const u = Math.random();
+  for (let i = 0; i < 6; i++) if (u < CUM_ED[i]) return RANGS[i]; return 0; }
+function tirerJK() { const c = cumul(JK_P), u = Math.random();
+  for (let i = 0; i < JK_V.length; i++) if (u < c[i]) return JK_V[i]; return 0; }
+function simuler(k, j, nSim) {
+  const t = new Float64Array(nSim);
+  for (let s = 0; s < nSim; s++) {
+    let v = 0; for (let i = 0; i < k; i++) v += tirerED(); if (j) v += tirerJK();
+    t[s] = v;
+  } return t;
+}
+const pct = (arr, q) => arr[Math.min(arr.length - 1, Math.floor(q * arr.length))];
+
+function renderBank() {
+  majMise();
+  const prix = +pGrille.value || 2.5;
+  const evED = RANGS.reduce((a, g, i) => a + PROBA[i] * g, 0);
+  const evJK = JK_V.reduce((a, v, i) => a + v * JK_P[i], 0);
+  document.getElementById('bEv').innerHTML =
+    `Espérance EuroDreams : <b>${eur(evED)}</b> par grille de ${eur(prix)} → TRJ
+     <b>${pc(evED / prix)}</b>.<br>
+     Espérance Joker+ : <b>${eur(evJK)}</b> par grille de ${eur(JK_MISE)} → TRJ
+     <b>${pc(evJK / JK_MISE)}</b> <span class="mut">— cagnotte réglée à
+     <b>${eur0(+pJk.value)}</b> (curseur ci-dessous, ou onglet Cagnotte).
+     Médiane historique 800 000 € → 51,54 %. Moyenne mesurée sur 642 M de
+     grilles : 52,39 %.</span><br>
+     <span class="mut">TRJ EuroDreams mesuré sur 297 tirages : 39,79 % (2 jackpots seulement) ·
+     hors rangs 1-2 : 28,44 %. TRJ officiel annoncé : 52 %.</span>`;
+
+  document.getElementById('tRangs').innerHTML =
+    '<tr><th>Rang</th><th>1 sur</th><th>gagnants/tirage</th><th>Gain</th></tr>' +
+    RANGS.map((g, i) => `<tr><td>${NOMS[i]}</td>
+      <td>${Math.round(1 / PROBA[i]).toLocaleString('fr-FR')}</td>
+      <td class="mut">${NGAG_MED[i] ? NGAG_MED[i].toLocaleString('fr-FR') : '—'}</td>
+      <td style="width:96px"><input type="number" value="${g}" step="0.01"></td></tr>`).join('');
+
+  const tb = document.getElementById('tBank');
+  if (!BANK.length) {
+    document.getElementById('bKpi').innerHTML = '<h2>Statistiques</h2><div class="meta">Aucun tirage saisi.</div>';
+    tb.innerHTML = ''; document.getElementById('bMc').textContent = '';
+    dessiner(cCum, [], []); dessiner(cTrj, [], []); return;
+  }
+
+  /* ---- KPI ---- */
+  const M = BANK.reduce((a, x) => a + miseDe(x), 0);
+  const G = BANK.reduce((a, x) => a + x.g, 0);
+  const nED = BANK.reduce((a, x) => a + x.k, 0), nJK = BANK.reduce((a, x) => a + x.j, 0);
+  const gains = BANK.map(x => x.g).slice().sort((a, b) => a - b);
+  const med = gains.length % 2 ? gains[(gains.length - 1) / 2] : (gains[gains.length / 2 - 1] + gains[gains.length / 2]) / 2;
+  const maxG = Math.max(...gains), iMax = BANK.findIndex(x => x.g === maxG);
+  const sansMax = G - maxG, misesSansMax = M - miseDe(BANK[iMax]);
+  const trj = G / M, solde = G - M;
+  const evTot = nED * evED + nJK * evJK;
+  const evTotHJ = nED * (evED - PROBA[0] * RANGS[0] - PROBA[1] * RANGS[1]) + nJK * JK_MISE * JK_TRJ_HJ;
+  const cls = v => v >= 0 ? 'pos' : 'neg';
+  document.getElementById('bKpi').innerHTML = `<h2>Statistiques — ${BANK.length} tirages</h2><div class="kpi">
+    <div>Total misé<b>${eur(M)}</b></div>
+    <div>Total gagné<b>${eur(G)}</b></div>
+    <div>Solde<b class="${cls(solde)}">${solde >= 0 ? '+' : ''}${eur(solde)}</b></div>
+    <div>Taux de retour<b class="${trj >= evTotHJ / M ? 'pos' : 'neg'}">${pc(trj)}</b></div>
+    <div>Gain médian<b>${eur(med)}</b></div>
+    <div>Gain moyen<b>${eur(G / BANK.length)}</b></div></div>
+    <div class="meta">
+    Composition : <b>${nED} grilles EuroDreams</b> (${eur(nED * prix)}) +
+    <b>${nJK} Joker+</b> (${eur(nJK * JK_MISE)}).<br>
+    Attendu <b>${eur(evTot)}</b> avec les gros lots, <b>${eur(evTotHJ)}</b> hors gros lots
+    → ratio observé/attendu <b>${(G / evTotHJ).toFixed(3).replace('.', ',')}</b>.
+    TRJ attendu hors gros lot <b>${pc(evTotHJ / M)}</b> contre <b>${pc(trj)}</b> observé.<br>
+    Plus gros gain <b>${eur(maxG)}</b> = <b>${(100 * maxG / G).toFixed(0)} %</b> du total.
+    Sans lui : ${eur(sansMax)} sur ${eur(misesSansMax)} → <b>${pc(sansMax / misesSansMax)}</b>.<br>
+    <span class="mut">L'écart médiane (${eur(med)}) / moyenne (${eur(G / BANK.length)}) mesure
+    la dépendance à un seul coup.</span></div>`;
+
+  /* ---- courbes ---- */
+  let c = 0; const soldes = BANK.map(x => c += x.g - miseDe(x));
+  let cm = 0, cg = 0; const trjs = BANK.map(x => { cm += miseDe(x); cg += x.g; return 100 * cg / cm; });
+
+  const nSim = Math.max(500, +pSim.value || 4000);
+  const sims = new Float64Array(nSim);
+  let cumM = 0, cumEv = 0; const bP5 = [], bP95 = [], bEv = [], trjEv = [];
+  BANK.forEach(x => {
+    const t = simuler(x.k, x.j, nSim);
+    for (let s = 0; s < nSim; s++) sims[s] += t[s];
+    const srt = Array.from(sims).sort((a, b) => a - b);
+    cumM += miseDe(x); cumEv += x.k * evED + x.j * evJK;
+    bP5.push(pct(srt, 0.05) - cumM); bP95.push(pct(srt, 0.95) - cumM);
+    bEv.push(cumEv - cumM); trjEv.push(100 * cumEv / cumM);
+  });
+  dessiner(cCum, soldes, [bP5, bP95, bEv], true);
+  dessiner(cTrj, trjs, [[], [], trjEv], false, '%');
+
+  /* ---- position vs hasard ---- */
+  /* portefeuille complet : nED grilles ED + nJK Joker+ */
+  const port = new Float64Array(nSim);
+  for (let s = 0; s < nSim; s++) { let v = 0;
+    for (let i = 0; i < nED; i++) v += tirerED();
+    for (let i = 0; i < nJK; i++) v += tirerJK(); port[s] = v; }
+  const P = Array.from(port).sort((a, b) => a - b);
+  let rang = 0; while (rang < P.length && P[rang] < G) rang++;
+  const perc = 100 * rang / P.length, nul = P.filter(v => v === 0).length;
+  document.getElementById('bMc').innerHTML =
+    `Sur <b>${nSim.toLocaleString('fr-FR')}</b> joueurs simulés ayant misé exactement la même
+     chose (<b>${nED} grilles EuroDreams + ${nJK} Joker+</b>) :<br>
+     médiane <b>${eur(pct(P, 0.5))}</b> · P5 ${eur(pct(P, 0.05))} · P95 ${eur(pct(P, 0.95))}<br>
+     Votre résultat (${eur(G)}) vous place au <b>${perc.toFixed(0)}<sup>e</sup> percentile</b>.
+     ${perc > 50 ? '<span class="pos">Au-dessus de la médiane — de la chance, pas de la performance.</span>'
+                 : '<span class="neg">En dessous de la médiane.</span>'}<br>
+     ${(100 * nul / P.length).toFixed(1)} % des simulations finissent à 0 €.
+     <br><br><b>Lecture.</b> Sur 61 tirages, l'IC à 95 % du taux de retour fait
+     <b>24,6 points</b> de large : il contient aussi bien 26 % que 47 %. Il faudrait
+     <b>~1 530 tirages</b> pour un IC de 5 points. Ce graphique ne peut donc pas
+     démontrer que vous jouez bien ou mal — seulement que vous perdez.
+     <br><span class="mut">Note : les grilles sont simulées indépendamment ; des grilles
+     disjointes sont en réalité légèrement anti-corrélées, ce qui resserre un peu
+     l'enveloppe intra-tirage sans changer le cumul.</span>`;
+
+  /* ---- tableau ---- */
+  tb.innerHTML = '<tr><th>Date</th><th>Mise</th><th>Gain</th><th>Net</th><th>Solde</th><th></th></tr>' +
+    BANK.map((x, i) => {
+      const m = miseDe(x), n = x.g - m;
+      return `<tr><td>${x.d}<span class="mut"> ${x.k}g${x.j ? '+J' : ''}</span></td>
+        <td>${m.toFixed(2)}</td><td>${x.g.toFixed(2)}</td>
+        <td class="${cls(n)}">${n >= 0 ? '+' : ''}${n.toFixed(2)}</td>
+        <td class="${cls(soldes[i])}">${soldes[i].toFixed(2)}</td>
+        <td><span class="x" data-i="${i}">×</span></td></tr>`;
+    }).join('');
+  tb.querySelectorAll('.x').forEach(el => el.onclick = () => {
+    BANK.splice(+el.dataset.i, 1); save(); renderBank();
+  });
+}
+
+/* ==================== ONGLET DONNÉES ==================== */
+function renderData() {
+  const f = ED_MESURE;
+  document.getElementById('tFacts').innerHTML =
+    '<tr><th>Fait mesuré</th><th>Valeur</th></tr>' + [
+    ['Tirages', f.tirages + ' (149 lundis, 148 jeudis)'],
+    ['Période', '06/11/2023 → 07/09/2026'],
+    ['Mise cumulée', f.mise + ' M€'],
+    ['Grilles', f.grilles + ' M (' + f.gpt.toLocaleString('fr-FR') + ' / tirage)'],
+    ['Rang 1 touché', '2 fois (2,93 attendus) — <b>jamais de report</b>'],
+    ['Rang 2 touché', '13 fois (11,7 attendus)'],
+    ['Tirages à 2+ gagnants rang 1 ou 2', '<b>0</b> — aucun partage observé'],
+    ['p(rang 6) observée / théorique', '0,1816 / 0,1812 → ratio <b>1,002</b>'],
+    ['p(rang 5) observée / théorique', '0,03138 / 0,03118 → ratio <b>1,006</b>'],
+    ['p(rang 4) observée / théorique', '0,002212 / 0,002192 → ratio <b>1,009</b>'],
+  ].map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+
+  document.getElementById('tCmp').innerHTML =
+    '<tr><th>Rang</th><th>Supposé v2</th><th>Réel (297 tirages)</th></tr>' + [
+    ['R1 — 6+Dream', '7 200 000 € fixe', '7 200 000 € <b>fixe</b> ✔'],
+    ['R2 — 6 n°', '120 000 € fixe', '120 000 € <b>fixe</b> ✔'],
+    ['R3 — 5 n°', '<span class="del">500 € fixe</span>', '<b>parimutuel</b> 34,70 → 990,50 (méd. 125,20)'],
+    ['R4 — 4 n°', '<span class="del">30 € fixe</span>', '<b>parimutuel</b> 17,40 → 65,70 (moy. 38,75)'],
+    ['R5 — 3 n°', '<span class="del">5 € fixe</span>', '<b>parimutuel</b> 3,00 → 7,90 (moy. 5,16)'],
+    ['R6 — 2 n°', '2,50 € fixe', '2,50 € <b>fixe</b> ✔'],
+  ].map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+
+  document.getElementById('tP1').innerHTML =
+    '<tr><th>Grilles disjointes</th><th>Exact</th><th>Formule v2</th><th>Écart</th></tr>' +
+    P1_EXACT.map((p, i) => { const approx = 1 - Math.pow(1 - P1_EXACT[0], i + 1);
+      return `<tr><td>${i + 1}</td><td><b>${pc(p)}</b></td><td class="mut">${pc(approx)}</td>
+        <td class="neg">${(100 * (approx - p)).toFixed(1)} pt</td></tr>`; }).join('');
+
+  document.getElementById('tPM').innerHTML =
+    '<tr><th>Grilles</th><th>sans Joker+</th><th>avec Joker+</th></tr>' +
+    PMISE_SANS.map((p, i) => `<tr><td>${i + 1} (mise ${(2.5 * (i + 1)).toFixed(2)} € / ${(2.5 * (i + 1) + 1.5).toFixed(2)} €)</td>
+      <td><b>${pc(p)}</b></td><td><b>${pc(PMISE_AVEC[i])}</b></td></tr>`).join('');
+
+  document.getElementById('tTrj').innerHTML =
+    '<tr><th>Mesure</th><th>Valeur</th></tr>' + [
+    ['TRJ mesuré, 297 tirages', '<b>39,79 %</b>'],
+    ['&nbsp;&nbsp;dont hors rangs 1 et 2', '28,44 %'],
+    ['&nbsp;&nbsp;théorique rangs 3-6', '28,46 % <span class="mut">— accord au centième</span>'],
+    ['TRJ long terme, tables réelles', '<b>44,31 %</b> nominal'],
+    ['&nbsp;&nbsp;actualisé à 3 %', '<b>39,19 %</b>'],
+    ['TRJ officiel annoncé', '<b class="warn" style="color:var(--warn)">52,00 %</b>'],
+    ['Écart non expliqué', '<b class="neg">−7,7 points</b>'],
+    ['Joker+ (642 M de grilles)', '<b class="pos">52,39 %</b> · 46,80 % hors jackpot'],
+  ].map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+}
+
+/* ==================== MOTEUR DE GRAPHIQUES ==================== */
+const TIP = (() => { const d = document.createElement('div'); d.id = 'tip';
+  document.body.appendChild(d); return d; })();
+function tipShow(ev, html) {
+  TIP.innerHTML = html; TIP.style.display = 'block';
+  const r = TIP.getBoundingClientRect();
+  let x = ev.clientX + 14, y = ev.clientY - r.height - 12;
+  if (x + r.width > innerWidth - 6) x = ev.clientX - r.width - 14;
+  if (y < 6) y = ev.clientY + 16;
+  TIP.style.left = x + 'px'; TIP.style.top = y + 'px';
+}
+const tipHide = () => { TIP.style.display = 'none'; };
+function ctx2d(cv) {
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, w, h); return { c, w, h };
+}
+const CSSV = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+
+/* ---------- graphique 1 : la cagnotte au fil du temps ---------- */
+let CAG_HIT = [];
+function drawCagnotte() {
+  const cv = document.getElementById('cvCag'); if (!cv) return;
+  const { c, w, h } = ctx2d(cv);
+  const S1 = CSSV('--s1'), S2 = CSSV('--s2'), GR = CSSV('--grid'),
+        MU = CSSV('--mut'), SU = CSSV('--surf');
+  const L = 40, R = 10, T = 14, B = 22;                       // marges
+  const t = d => new Date(d + 'T00:00:00Z').getTime();
+  const x0 = t('2011-01-01'), x1 = t('2026-10-01'), y1 = 3.3e6;
+  const px = v => L + (v - x0) / (x1 - x0) * (w - L - R);
+  const py = v => h - B - v / y1 * (h - T - B);
+
+  /* grille + axes (hairline, solide, récessif) */
+  c.strokeStyle = GR; c.lineWidth = 1; c.fillStyle = MU; c.font = '10px system-ui';
+  for (let v = 0; v <= 3e6; v += 1e6) {
+    const y = Math.round(py(v)) + .5;
+    c.beginPath(); c.moveTo(L, y); c.lineTo(w - R, y); c.stroke();
+    c.textAlign = 'right'; c.fillText(v ? (v / 1e6) + ' M' : '0', L - 5, y + 3);
+  }
+  c.textAlign = 'center';
+  for (let a = 2012; a <= 2026; a += 2) c.fillText(a, px(t(a + '-01-01')), h - 6);
+
+  /* zone non mesurée */
+  const xEnd = px(t(CAG.serie[CAG.serie.length - 1][0]));
+  c.fillStyle = 'rgba(139,155,180,.05)'; c.fillRect(xEnd, T, w - R - xEnd, h - T - B);
+
+
+  /* ligne de référence : plafond 2,5 M depuis 2016 */
+  const yc = Math.round(py(CAG.cap)) + .5;
+  c.strokeStyle = GR; c.beginPath(); c.moveTo(xEnd, yc); c.lineTo(w - R, yc); c.stroke();
+
+  /* série mesurée — ligne 2px, jointures rondes */
+  c.strokeStyle = S1; c.lineWidth = 2; c.lineJoin = 'round'; c.lineCap = 'round';
+  c.beginPath();
+  CAG.serie.forEach((p, i) => { const X = px(t(p[0])), Y = py(p[1]);
+    i ? c.lineTo(X, Y) : c.moveTo(X, Y); });
+  c.stroke();
+
+  /* jackpots touchés — dots r=4 + anneau 2px couleur surface */
+  CAG_HIT = [];
+  CAG.gains.forEach(g => {
+    const X = px(t(g[0])), Y = py(g[1]);
+    c.beginPath(); c.arc(X, Y, 6, 0, 7); c.fillStyle = SU; c.fill();
+    c.beginPath(); c.arc(X, Y, 4, 0, 7); c.fillStyle = S2; c.fill();
+    CAG_HIT.push({ X, Y, kind: 'g', d: g[0], v: g[1], n: g[2] });
+  });
+  /* étiquette directe : uniquement l'extrême */
+  const mi = CAG.serie.reduce((a, p, i) => p[1] > CAG.serie[a][1] ? i : a, 0);
+  const mx = CAG.serie[mi];
+  c.fillStyle = CSSV('--txt'); c.font = '600 10px system-ui'; c.textAlign = 'left';
+  c.fillText(eur0(mx[1]), px(t(mx[0])) + 8, py(mx[1]) - 2);
+  c.fillStyle = MU; c.font = '9px system-ui'; c.textAlign = 'right';
+  c.fillText('plafond 2,5 M', w - R - 2, yc - 4);
+
+  /* index pour le survol : paliers + gains */
+  CAG.serie.forEach(p => CAG_HIT.push({ X: px(t(p[0])), Y: py(p[1]), kind: 's', d: p[0], v: p[1] }));
+  cv._geo = { L, R, T, B, w, h, S1, S2 };
+}
+function hoverCagnotte(ev) {
+  const cv = document.getElementById('cvCag'), b = cv.getBoundingClientRect();
+  const mx = ev.clientX - b.left;
+  let best = null, bd = 1e9;
+  CAG_HIT.forEach(p => { const d = Math.abs(p.X - mx); if (d < bd) { bd = d; best = p; } });
+  if (!best || bd > 30) { drawCagnotte(); tipHide(); return; }
+  drawCagnotte();
+  const { c, h } = { c: cv.getContext('2d'), h: cv.clientHeight };
+  c.strokeStyle = CSSV('--mut'); c.lineWidth = 1;
+  c.beginPath(); c.moveTo(best.X + .5, 14); c.lineTo(best.X + .5, h - 22); c.stroke();
+  const col = best.kind === 'g' ? CSSV('--s2') : CSSV('--s1');
+  c.beginPath(); c.arc(best.X, best.Y, 7, 0, 7); c.fillStyle = CSSV('--surf'); c.fill();
+  c.beginPath(); c.arc(best.X, best.Y, 5, 0, 7); c.fillStyle = col; c.fill();
+  const dt = new Date(best.d + 'T00:00:00Z').toLocaleDateString('fr-FR');
+  tipShow(ev, `<b>${eur0(best.v)}</b><br>
+    <span class="k" style="background:${col}"></span>
+    ${best.kind === 'g' ? 'jackpot touché' + (best.n > 1 ? ' — ' + best.n + ' gagnants' : '') : 'cagnotte en cours'}
+    <br><em>${dt} · TRJ ${(100 * trjJk(best.v)).toFixed(1).replace('.', ',')} %</em>`);
+}
+
+/* ---------- graphique 2 : tranches de cagnotte ---------- */
+let TR_HIT = [];
+function drawTranches() {
+  const cv = document.getElementById('cvTr'); if (!cv) return;
+  const { c, w, h } = ctx2d(cv);
+  const S1 = CSSV('--s1'), GR = CSSV('--grid'), MU = CSSV('--mut'), TX = CSSV('--txt');
+  const L = 78, R = 92, T = 8, B = 20, n = CAG.tranches.length;
+  const band = (h - T - B) / n, th = Math.min(24, band - 6);   // <=24px, >=2px de gap
+  const vmax = 0.30;
+  const px = v => L + v / vmax * (w - L - R);
+  c.strokeStyle = GR; c.lineWidth = 1; c.fillStyle = MU; c.font = '10px system-ui';
+  c.textAlign = 'center';
+  for (let v = 0; v <= 0.30001; v += 0.10) {
+    const X = Math.round(px(v)) + .5;
+    c.beginPath(); c.moveTo(X, T); c.lineTo(X, h - B); c.stroke();
+    c.fillText((100 * v).toFixed(0).replace('.', ',') + ' %', X, h - 6);
+  }
+  TR_HIT = [];
+  CAG.tranches.forEach((tr, i) => {
+    const yc = T + band * i + band / 2, y = yc - th / 2, X = px(tr[1]);
+    /* barre : coin arrondi 4px côté valeur, carré à la ligne de base */
+    c.fillStyle = S1; c.beginPath();
+    c.moveTo(L, y); c.lineTo(X - 4, y); c.quadraticCurveTo(X, y, X, y + 4);
+    c.lineTo(X, y + th - 4); c.quadraticCurveTo(X, y + th, X - 4, y + th);
+    c.lineTo(L, y + th); c.closePath(); c.fill();
+    c.fillStyle = MU; c.font = '10px system-ui'; c.textAlign = 'right';
+    c.fillText(tr[0].replace(/\./g, ',').replace(' M', ' M€'), L - 6, yc + 3);
+    /* part : au bout de la barre si ça tient, sinon à l'intérieur (blanc) */
+    const lab = (100 * tr[1]).toFixed(1).replace('.', ',') + ' %';
+    c.font = '600 11px system-ui';
+    const tw = c.measureText(lab).width;
+    if (X + 6 + tw <= w - R - 8) {
+      c.textAlign = 'left'; c.fillStyle = TX; c.fillText(lab, X + 6, yc + 3);
+    } else {
+      c.textAlign = 'right'; c.fillStyle = '#fff'; c.fillText(lab, X - 6, yc + 3);
+    }
+    /* TRJ : colonne alignée à droite, jamais en collision */
+    c.textAlign = 'right'; c.fillStyle = MU; c.font = '10px system-ui';
+    c.fillText('TRJ ' + (100 * tr[2]).toFixed(1).replace('.', ',') + ' %', w - 4, yc + 3);
+    TR_HIT.push({ y0: T + band * i, y1: T + band * (i + 1), tr, X, yc, y, th });
+  });
+}
+function hoverTranches(ev) {
+  const cv = document.getElementById('cvTr'), b = cv.getBoundingClientRect();
+  const my = ev.clientY - b.top;
+  const hit = TR_HIT.find(t => my >= t.y0 && my < t.y1);
+  drawTranches();
+  if (!hit) { tipHide(); return; }
+  const c = cv.getContext('2d');
+  c.fillStyle = 'rgba(255,255,255,.14)';
+  c.fillRect(78, hit.y, hit.X - 78, hit.th);
+  tipShow(ev, `<b>${(100 * hit.tr[1]).toFixed(1).replace('.', ',')} %</b> des tirages<br>
+    <span class="k" style="background:${CSSV('--s1')}"></span>cagnotte ${hit.tr[0].replace(/\./g, ',')}€
+    <br><em>TRJ moyen ${(100 * hit.tr[2]).toFixed(2).replace('.', ',')} % · perte espérée
+    −${(1.5 * (1 - hit.tr[2])).toFixed(2).replace('.', ',')} € par grille</em>`);
+}
+
+/* ---------- onglet Cagnotte ---------- */
+function renderCag() {
+  const J = +document.getElementById('pJk').value || 800000;
+  const p50 = CAG.pct.P50, p90 = CAG.pct.P90;
+  const partHaute = CAG.tranches.filter(t => t[0].startsWith('2.') || t[0].startsWith('2,'))
+                    .reduce((a, t) => a + t[1], 0);
+  document.getElementById('cTiles').innerHTML = [
+    ['Cagnotte médiane', eur0(p50), 'TRJ ' + (100 * trjJk(p50)).toFixed(1).replace('.', ',') + ' %'],
+    ['Cagnotte au plafond actuel', eur0(CAG.cap), 'TRJ ' + (100 * trjJk(CAG.cap)).toFixed(1).replace('.', ',') + ' %'],
+    ['Tirages à plus de 2 M €', (100 * partHaute).toFixed(1).replace('.', ',') + ' %', 'TRJ moyen ~ 61 %'],
+    ['Espérance nulle à', eur0(CAG.seuil), (CAG.seuil / CAG.maxhist).toFixed(1).replace('.', ',') + '× le record']
+  ].map(t => `<div>${t[0]}<b>${t[1]}</b><em>${t[2]}</em></div>`).join('');
+
+  document.getElementById('cagNote').innerHTML =
+    `Deux régimes. <b>2011 → début 2016</b> : palier de <b>+75 000 €</b> par semaine, sommet
+     historique <b>${eur0(CAG.maxhist)}</b> — c'est la partie mesurée, ${CAG.nvis.toLocaleString('fr-FR')} tirages.
+     <b>Depuis 2016</b> la cagnotte en cours n'est plus publiée : seuls les
+     ${CAG.gains.filter(g => g[0] >= '2016-02').length} jackpots touchés sont visibles.
+     Ils sont tous multiples de <b>200 000 €</b> et plafonnés à <b>${eur0(CAG.cap)}</b>,
+     ce qui ramène le TRJ maximal atteignable de 65,3 % à
+     <b>${(100 * trjJk(CAG.cap)).toFixed(1).replace('.', ',')} %</b>.`;
+
+  document.getElementById('tCag').innerHTML =
+    '<tr><th>Cagnotte</th><th>Part</th><th>TRJ</th><th>Perte/grille</th></tr>' +
+    CAG.tranches.map(t => `<tr><td>${t[0].replace(/\./g, ',')}€</td><td>${(100 * t[1]).toFixed(1).replace('.', ',')} %</td>
+      <td>${(100 * t[2]).toFixed(2).replace('.', ',')} %</td>
+      <td class="neg">−${(1.5 * (1 - t[2])).toFixed(2).replace('.', ',')} €</td></tr>`).join('') +
+    `<tr><td><b>Ensemble</b></td><td><b>100 %</b></td>
+      <td><b>${(100 * trjJk(CAG.moy)).toFixed(2).replace('.', ',')} %</b></td>
+      <td class="neg"><b>−${(1.5 * (1 - trjJk(CAG.moy))).toFixed(2).replace('.', ',')} €</b></td></tr>`;
+  document.getElementById('cagSrc').innerHTML =
+    `Distribution calculée sur les <b>${CAG.nvis.toLocaleString('fr-FR')} tirages</b> où la cagnotte en cours est
+     publiée (2011-02-02 → 2016-01-24). Percentiles : P10 ${eur0(CAG.pct.P10)} ·
+     P50 ${eur0(p50)} · P90 ${eur0(p90)} · moyenne ${eur0(CAG.moy)}.`;
+  document.getElementById('cagSeuil').textContent = eur0(CAG.seuil);
+  document.getElementById('cagRatio').textContent = (CAG.seuil / CAG.maxhist).toFixed(1).replace('.', ',');
+  drawCagnotte(); drawTranches();
+}
+['cvCag','cvTr'].forEach(id => {
+  const cv = document.getElementById(id);
+  const fn = id === 'cvCag' ? hoverCagnotte : hoverTranches;
+  cv.addEventListener('pointermove', fn);
+  cv.addEventListener('pointerleave', () => { tipHide(); id === 'cvCag' ? drawCagnotte() : drawTranches(); });
+});
+/* slider cagnotte : pilote le modèle Joker+ du Bankroll */
+(() => {
+  const sl = document.getElementById('pJk');
+  const maj = () => {
+    const J = +sl.value; setJackpot(J);
+    document.getElementById('pJkLab').textContent = eur0(J);
+    document.getElementById('pJkTrj').innerHTML =
+      `TRJ du Joker+ à cette cagnotte : <b>${(100 * trjJk(J)).toFixed(2).replace('.', ',')} %</b>
+       <span class="mut">— 46,80 % hors jackpot + ${(100 * (trjJk(J) - TRJ_JK_HJ)).toFixed(2).replace('.', ',')} pt
+       apportés par le rang 1. Médiane historique 800 000 €.</span>`;
+  };
+  sl.addEventListener('input', maj);
+  sl.addEventListener('change', () => { maj(); renderBank(); });
+  maj();
+})();
+addEventListener('resize', () => {
+  if (!document.getElementById('tab-cag').classList.contains('hide')) { drawCagnotte(); drawTranches(); }
+});
+
+
+/* ==================== ONGLET POPULARITÉ (v5) ====================
+   Données produites par scripts/16_donnees_v5_popularite.py — toutes MESURÉES
+   sur les 297 tirages EuroDreams et les 5 050 tirages Joker+.               */
+const POP = {"disp":[{"rang":3,"nom":"Rang 3 — 5 n°","p":5.31474215684742e-05,"pobs":5.5849498265459606e-05,"var":1.8549526919626602,"sd":1.3619664797500195,"gag":3112},{"rang":4,"nom":"Rang 4 — 4 n°","p":0.0021923311396995606,"pobs":0.0022147367124155655,"var":8.308245143227,"sd":2.882402668474167,"gag":124475},{"rang":5,"nom":"Rang 5 — 3 n°","p":0.031179820653504865,"pobs":0.03141131657518859,"var":33.49396878432717,"sd":5.787397410263717,"gag":1765958},{"rang":6,"nom":"Rang 6 — 2 n°","p":0.18123270754849702,"pobs":0.18168690577752336,"var":54.22000807787288,"sd":7.363423665515443,"gag":10219642}],"dec":[{"d":1,"n":30,"z":-12.933897447111057,"trj":0.3163449861660388},{"d":2,"n":30,"z":-6.878165769357758,"trj":0.2968400241768663},{"d":3,"n":29,"z":-3.9585866541621004,"trj":0.2930721035149347},{"d":4,"n":30,"z":-2.0170818316399037,"trj":0.2901457934510566},{"d":5,"n":30,"z":-0.39738803367465964,"trj":0.28713778521146943},{"d":6,"n":29,"z":1.3548420611363834,"trj":0.2817835484114976},{"d":7,"n":30,"z":3.2833919025161054,"trj":0.2750620473567842},{"d":8,"n":29,"z":5.3275089456969225,"trj":0.27776245725792004},{"d":9,"n":30,"z":7.498783968158427,"trj":0.2708127988022725},{"d":10,"n":30,"z":13.463656255522865,"trj":0.2572296111032953}],"trjMoy":0.2846232880618846,"trjMax":0.3163449861660388,"gain":0.031721698104154206,"signes":[{"s":"Lion","n":443,"z":1.1285988541272562,"joue":1.110278032982441},{"s":"Balance","n":454,"z":1.688655428355819,"joue":1.0467880238378788},{"s":"Bélier","n":435,"z":0.7212849819610289,"joue":1.0302145188284841},{"s":"Gémeaux","n":398,"z":-1.1625416768077734,"joue":1.02664036967349},{"s":"Taureau","n":396,"z":-1.2643701448493303,"joue":1.0189406274457036},{"s":"Scorpion","n":412,"z":-0.4497424005168752,"joue":0.9979244256905019},{"s":"Poissons","n":412,"z":-0.4497424005168752,"joue":0.9964969195208366},{"s":"Cancer","n":430,"z":0.4667138118571366,"joue":0.9710736999818372},{"s":"Vierge","n":438,"z":0.8740276840233642,"joue":0.9692465955415377},{"s":"Sagittaire","n":399,"z":-1.111627442786995,"joue":0.96647944847352},{"s":"Verseau","n":383,"z":-1.9262551871194498,"joue":0.9427499979596062},{"s":"Capricorne","n":450,"z":1.4849984922727053,"joue":0.9156832399809007}],"rho":0.24868689626011295,"rhoP":0.4357357561189062,"nJk":5050,"levierJk":{"min":0.00436,"max":0.00572,"ratioSigne":1.212513219097031},"nED":297,"grillesED":56276067};
+const VAR_JK_R7 = 2.195;                 /* témoin : Joker+, numéros non choisis */
+const pt = v => (100 * v).toFixed(2).replace('.', ',') + ' pt';
+const p1 = v => (100 * v).toFixed(1).replace('.', ',') + ' %';
+const nb = v => v.toLocaleString('fr-FR');
+
+/* ---------- graphique 3 : sur-dispersion par rang (échelle log) ---------- */
+let VAR_HIT = [];
+function drawVar() {
+  const cv = document.getElementById('cvVar'); if (!cv) return;
+  const { c, w, h } = ctx2d(cv);
+  const S1 = CSSV('--s1'), S2 = CSSV('--s2'), GR = CSSV('--grid'),
+        MU = CSSV('--mut'), TX = CSSV('--txt');
+  const rows = POP.disp.map(d => ({ lab: 'Rang ' + d.rang, v: d.var, jk: false, d }))
+    .concat([{ lab: 'Joker+ r.7', v: VAR_JK_R7, jk: true, d: null }]);
+  const L = 74, R = 58, T = 8, B = 20, n = rows.length;
+  const band = (h - T - B) / n, th = Math.min(24, band - 6);
+  const lx = v => L + Math.log10(v) / 2 * (w - L - R);        /* 1 → 100 */
+  c.font = '10px system-ui'; c.textAlign = 'center';
+  [1, 3, 10, 30, 100].forEach(v => {
+    const X = Math.round(lx(v)) + .5;
+    c.strokeStyle = v === 1 ? MU : GR; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(X, T); c.lineTo(X, h - B); c.stroke();
+    c.fillStyle = MU; c.fillText(v === 1 ? '1 (hasard)' : '×' + v, X, h - 6);
+  });
+  VAR_HIT = [];
+  rows.forEach((r, i) => {
+    const yc = T + band * i + band / 2, y = yc - th / 2, X = lx(r.v);
+    c.fillStyle = r.jk ? S2 : S1; c.beginPath();
+    c.moveTo(L, y); c.lineTo(X - 4, y); c.quadraticCurveTo(X, y, X, y + 4);
+    c.lineTo(X, y + th - 4); c.quadraticCurveTo(X, y + th, X - 4, y + th);
+    c.lineTo(L, y + th); c.closePath(); c.fill();
+    c.textAlign = 'right'; c.fillStyle = MU; c.font = '10px system-ui';
+    c.fillText(r.lab, L - 6, yc + 3);
+    const lab = r.v.toFixed(2).replace('.', ',');
+    c.font = '600 11px system-ui';
+    if (X + 6 + c.measureText(lab).width <= w - 6) {
+      c.textAlign = 'left'; c.fillStyle = TX; c.fillText(lab, X + 6, yc + 3);
+    } else { c.textAlign = 'right'; c.fillStyle = '#fff'; c.fillText(lab, X - 6, yc + 3); }
+    VAR_HIT.push({ y0: T + band * i, y1: T + band * (i + 1), r, X, y, th });
+  });
+}
+function hoverVar(ev) {
+  const cv = document.getElementById('cvVar'), b = cv.getBoundingClientRect();
+  const hit = VAR_HIT.find(t => ev.clientY - b.top >= t.y0 && ev.clientY - b.top < t.y1);
+  drawVar(); if (!hit) { tipHide(); return; }
+  const c = cv.getContext('2d');
+  c.fillStyle = 'rgba(255,255,255,.14)'; c.fillRect(74, hit.y, hit.X - 74, hit.th);
+  const col = hit.r.jk ? CSSV('--s2') : CSSV('--s1');
+  tipShow(ev, hit.r.jk
+    ? `<b>Var(z) = ${VAR_JK_R7.toFixed(2).replace('.', ',')}</b><br>
+       <span class="k" style="background:${col}"></span>Joker+, rang 7
+       <br><em>numéros imprimés sur le ticket : presque pas de choix humain</em>`
+    : `<b>Var(z) = ${hit.r.v.toFixed(2).replace('.', ',')}</b><br>
+       <span class="k" style="background:${col}"></span>${hit.r.d.nom}
+       <br><em>${nb(hit.r.d.gag)} gagnants cumulés · fluctuation
+       ×${hit.r.d.sd.toFixed(2).replace('.', ',')} sur l'écart-type</em>`);
+}
+
+/* ---------- graphique 4 : écart de TRJ par décile de fréquentation ---------- */
+let DEC_HIT = [];
+function drawDec() {
+  const cv = document.getElementById('cvDec'); if (!cv) return;
+  const { c, w, h } = ctx2d(cv);
+  const S1 = CSSV('--s1'), S2 = CSSV('--s2'), GR = CSSV('--grid'),
+        MU = CSSV('--mut'), TX = CSSV('--txt');
+  const L = 34, R = 8, T = 22, B = 34, n = POP.dec.length;
+  const ecarts = POP.dec.map(d => d.trj - POP.trjMoy);
+  const m = Math.max(...ecarts.map(Math.abs)) * 1.28;
+  const py = v => T + (m - v) / (2 * m) * (h - T - B);
+  const bw = Math.min(24, (w - L - R) / n - 8);
+  const cx = i => L + (w - L - R) * (i + .5) / n;
+  c.font = '10px system-ui'; c.textAlign = 'right'; c.fillStyle = MU;
+  [-2, 0, 2].forEach(g => {                                   /* grille en points */
+    const v = g / 100, Y = Math.round(py(v)) + .5;
+    c.strokeStyle = g === 0 ? MU : GR; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(L, Y); c.lineTo(w - R, Y); c.stroke();
+    c.fillStyle = MU; c.fillText((g > 0 ? '+' : '') + g, L - 5, Y + 3);
+  });
+  DEC_HIT = [];
+  POP.dec.forEach((d, i) => {
+    const e = d.trj - POP.trjMoy, X = cx(i), y0 = py(0), y1 = py(e);
+    const top = Math.min(y0, y1), hh = Math.abs(y1 - y0);
+    c.fillStyle = e >= 0 ? S1 : S2; c.beginPath();            /* arrondi côté valeur */
+    if (e >= 0) {
+      c.moveTo(X - bw / 2, y0); c.lineTo(X - bw / 2, top + 4);
+      c.quadraticCurveTo(X - bw / 2, top, X - bw / 2 + 4, top);
+      c.lineTo(X + bw / 2 - 4, top); c.quadraticCurveTo(X + bw / 2, top, X + bw / 2, top + 4);
+      c.lineTo(X + bw / 2, y0);
+    } else {
+      c.moveTo(X - bw / 2, y0); c.lineTo(X - bw / 2, top + hh - 4);
+      c.quadraticCurveTo(X - bw / 2, top + hh, X - bw / 2 + 4, top + hh);
+      c.lineTo(X + bw / 2 - 4, top + hh);
+      c.quadraticCurveTo(X + bw / 2, top + hh, X + bw / 2, top + hh - 4);
+      c.lineTo(X + bw / 2, y0);
+    }
+    c.closePath(); c.fill();
+    c.textAlign = 'center'; c.fillStyle = MU; c.font = '10px system-ui';
+    c.fillText('D' + d.d, X, h - 20);
+    DEC_HIT.push({ x0: L + (w - L - R) * i / n, x1: L + (w - L - R) * (i + 1) / n,
+                   d, e, X, top, hh, bw });
+  });
+  /* étiquettes directes : seulement les deux extrêmes */
+  [[0, 'le moins fréquenté', 'left'], [n - 1, 'le plus fréquenté', 'right']]
+    .forEach(([i, txt, side]) => {
+      const d = POP.dec[i], e = d.trj - POP.trjMoy, X = cx(i);
+      c.font = '600 11px system-ui'; c.textAlign = 'center'; c.fillStyle = TX;
+      const lab = p1(d.trj), half = c.measureText(lab).width / 2;
+      const XL = Math.min(w - R - half, Math.max(L + half, X));   /* jamais hors cadre */
+      c.fillText(lab, XL, e >= 0 ? py(e) - 8 : py(e) + 15);
+      c.font = '10px system-ui'; c.fillStyle = MU; c.textAlign = side;
+      c.fillText(txt, side === 'left' ? L : w - R, h - 7);        /* ancré au cadre */
+    });
+  c.textAlign = 'left'; c.fillStyle = MU; c.font = '10px system-ui';
+  c.fillText('écart au TRJ moyen (' + p1(POP.trjMoy) + '), en points', L, 12);
+}
+function hoverDec(ev) {
+  const cv = document.getElementById('cvDec'), b = cv.getBoundingClientRect();
+  const mx = ev.clientX - b.left;
+  const hit = DEC_HIT.find(t => mx >= t.x0 && mx < t.x1);
+  drawDec(); if (!hit) { tipHide(); return; }
+  const c = cv.getContext('2d');
+  c.fillStyle = 'rgba(255,255,255,.14)';
+  c.fillRect(hit.X - hit.bw / 2, hit.top, hit.bw, hit.hh);
+  const col = hit.e >= 0 ? CSSV('--s1') : CSSV('--s2');
+  tipShow(ev, `<b>${p1(hit.d.trj)}</b> de TRJ<br>
+    <span class="k" style="background:${col}"></span>décile ${hit.d.d} —
+    ${hit.d.n} tirages<br><em>écart ${hit.e >= 0 ? '+' : '−'}${pt(Math.abs(hit.e))} ·
+    résidu moyen du rang 6 : ${hit.d.z >= 0 ? '+' : '−'}${Math.abs(hit.d.z).toFixed(1).replace('.', ',')} σ
+    · gain moyen ${(2.5 * hit.d.trj).toFixed(3).replace('.', ',')} € par grille</em>`);
+}
+
+/* ---------- graphique 5 : fréquence publiée vs part jouée ---------- */
+let SIG_HIT = [];
+function drawSig() {
+  const cv = document.getElementById('cvSig'); if (!cv) return;
+  const { c, w, h } = ctx2d(cv);
+  const S1 = CSSV('--s1'), GR = CSSV('--grid'), MU = CSSV('--mut'),
+        TX = CSSV('--txt'), SU = CSSV('--surf');
+  const L = 44, R = 14, T = 16, B = 30;
+  const E = POP.nJk / 12;
+  const xs = POP.signes.map(o => o.n), ys = POP.signes.map(o => o.joue);
+  const x0 = Math.min(...xs) - 12, x1 = Math.max(...xs) + 12;
+  const y0 = Math.min(...ys) - .022, y1 = Math.max(...ys) + .022;
+  const px = v => L + (v - x0) / (x1 - x0) * (w - L - R);
+  const py = v => h - B - (v - y0) / (y1 - y0) * (h - T - B);
+  c.font = '10px system-ui';
+  c.strokeStyle = GR; c.lineWidth = 1;
+  for (let v = 0.92; v <= 1.11; v += 0.04) {                  /* grille horizontale */
+    const Y = Math.round(py(v)) + .5;
+    c.beginPath(); c.moveTo(L, Y); c.lineTo(w - R, Y); c.stroke();
+    c.textAlign = 'right'; c.fillStyle = MU;
+    c.fillText(v.toFixed(2).replace('.', ','), L - 5, Y + 3);
+  }
+  c.setLineDash([4, 4]); c.strokeStyle = MU;                  /* repères attendus */
+  c.beginPath(); c.moveTo(px(E), T); c.lineTo(px(E), h - B); c.stroke();
+  c.beginPath(); c.moveTo(L, py(1)); c.lineTo(w - R, py(1)); c.stroke();
+  c.setLineDash([]);
+  c.textAlign = 'center'; c.fillStyle = MU;
+  [390, 410, 430, 450].forEach(v => c.fillText(v, px(v), h - 14));
+  c.fillText('sorties publiées par la Loterie  (attendu ' +
+             E.toFixed(1).replace('.', ',') + ')', (L + w - R) / 2, h - 3);
+  c.save(); c.translate(11, (T + h - B) / 2); c.rotate(-Math.PI / 2);
+  c.textAlign = 'center'; c.fillText('indice joué', 0, 0); c.restore();
+  /* points + étiquettes non chevauchantes */
+  SIG_HIT = []; const placed = [];
+  POP.signes.forEach(o => {
+    const X = px(o.n), Y = py(o.joue);
+    c.beginPath(); c.arc(X, Y, 7, 0, 7); c.fillStyle = SU; c.fill();   /* anneau 2px */
+    c.beginPath(); c.arc(X, Y, 5, 0, 7); c.fillStyle = S1; c.fill();
+    SIG_HIT.push({ X, Y, o });
+  });
+  /* les pastilles elles-mêmes sont des obstacles : une étiquette ne doit
+     jamais masquer un point voisin. 4 positions candidates, sinon on renonce
+     et le signe reste lisible au survol.                                    */
+  SIG_HIT.forEach(p => placed.push({ x0: p.X - 8, y0: p.Y - 8, x1: p.X + 8, y1: p.Y + 8 }));
+  const libre = b => !placed.some(q =>
+    b.x0 < q.x1 && b.x1 > q.x0 && b.y0 < q.y1 && b.y1 > q.y0);
+  c.font = '10px system-ui'; c.fillStyle = MU;
+  POP.signes.forEach(o => {
+    const X = px(o.n), Y = py(o.joue), tw = c.measureText(o.s).width;
+    const cand = [[X + 9, Y + 3], [X - 9 - tw, Y + 3],
+                  [X - tw / 2, Y - 10], [X - tw / 2, Y + 17],
+                  [X + 7, Y - 8], [X - 7 - tw, Y - 8],
+                  [X + 7, Y + 15], [X - 7 - tw, Y + 15]];
+    for (const [bx, by] of cand) {
+      const box = { x0: bx - 2, y0: by - 9, x1: bx + tw + 2, y1: by + 3 };
+      if (box.x0 < L || box.x1 > w - R || box.y0 < T || box.y1 > h - B) continue;
+      if (!libre(box)) continue;
+      placed.push(box); c.textAlign = 'left'; c.fillText(o.s, bx, by); break;
+    }
+  });
+}
+function hoverSig(ev) {
+  const cv = document.getElementById('cvSig'), b = cv.getBoundingClientRect();
+  const mx = ev.clientX - b.left, my = ev.clientY - b.top;
+  let best = null, bd = 1e9;
+  SIG_HIT.forEach(p => { const d = Math.hypot(p.X - mx, p.Y - my);
+    if (d < bd) { bd = d; best = p; } });
+  drawSig();
+  if (!best || bd > 26) { tipHide(); return; }
+  const c = cv.getContext('2d');
+  c.beginPath(); c.arc(best.X, best.Y, 9, 0, 7); c.fillStyle = CSSV('--surf'); c.fill();
+  c.beginPath(); c.arc(best.X, best.Y, 7, 0, 7); c.fillStyle = CSSV('--s1'); c.fill();
+  const o = best.o;
+  tipShow(ev, `<b>${o.s}</b><br>
+    <span class="k" style="background:${CSSV('--s1')}"></span>${o.n} sorties
+    (${o.z >= 0 ? '+' : '−'}${Math.abs(o.z).toFixed(2).replace('.', ',')} σ)
+    <br><em>indice joué ${o.joue.toFixed(3).replace('.', ',')} —
+    ${o.joue > 1 ? 'sur-joué' : 'sous-joué'} de
+    ${Math.abs(100 * (o.joue - 1)).toFixed(1).replace('.', ',')} %</em>`);
+}
+
+/* ---------- rendu de l'onglet ---------- */
+function renderPop() {
+  const vmax = Math.max(...POP.disp.map(d => d.var));
+  const sdmax = Math.max(...POP.disp.map(d => d.sd));
+  document.getElementById('pVarMax').textContent = vmax.toFixed(2).replace('.', ',');
+  document.getElementById('pSdMax').textContent = sdmax.toFixed(1).replace('.', ',');
+  document.getElementById('pNed').textContent = nb(POP.nED);
+  document.getElementById('pNjk').textContent = nb(POP.nJk);
+  document.getElementById('pMoy').textContent = p1(POP.trjMoy);
+  document.getElementById('pMoyLg').textContent = p1(POP.trjMoy);
+  document.getElementById('pBorne').textContent = p1(POP.trjMax);
+  document.getElementById('pGain').textContent = '+' + pt(POP.gain);
+  document.getElementById('pGain2').textContent = '+' + pt(POP.gain);
+  const amp = POP.dec[0].trj - POP.dec[POP.dec.length - 1].trj;
+  document.getElementById('pAmp').textContent = pt(amp);
+
+  document.getElementById('pTiles').innerHTML = [
+    ['Sur-dispersion au rang 6', '×' + vmax.toFixed(0), 'contre 1 si les grilles étaient tirées au sort'],
+    ['Témoin Joker+ (non choisi)', '×' + VAR_JK_R7.toFixed(1).replace('.', ','), 'la différence est le choix humain'],
+    ['Borne du levier anti-partage', '+' + pt(POP.gain), 'et elle est inatteignable'],
+    ['Levier réellement mesuré', '+0,44 pt', 'au mieux +0,57 pt (Joker+, 642 M grilles)']
+  ].map(t => `<div>${t[0]}<b>${t[1]}</b><em>${t[2]}</em></div>`).join('');
+
+  document.getElementById('pSigNote').innerHTML =
+    `<b>Corrélation nulle : ρ de Spearman = ${POP.rho.toFixed(3).replace('.', ',')}
+     (p = ${POP.rhoP.toFixed(2).replace('.', ',')})</b>. La preuve la plus nette est en bas
+     à droite : <b>Capricorne</b> est le 2ᵉ signe le plus sorti et le <b>moins joué</b>
+     (indice ${POP.signes[POP.signes.length - 1].joue.toFixed(3).replace('.', ',')}),
+     tandis que <b>Lion</b>, le plus joué
+     (${POP.signes[0].joue.toFixed(3).replace('.', ',')}), n'est que 3ᵉ au palmarès.
+     La popularité d'un signe suit le calendrier symbolique, pas les statistiques —
+     et c'est précisément ce qui la rend exploitable : elle ne bougera pas.`;
+
+  document.getElementById('tSig').innerHTML =
+    '<tr><th>Signe</th><th>Sorties</th><th>z</th><th>Indice joué</th><th>Écart</th></tr>' +
+    POP.signes.map(o => `<tr><td>${o.s}</td><td>${o.n}</td>
+      <td class="mut">${o.z >= 0 ? '+' : '−'}${Math.abs(o.z).toFixed(2).replace('.', ',')}</td>
+      <td><b>${o.joue.toFixed(3).replace('.', ',')}</b></td>
+      <td class="${o.joue > 1 ? 'neg' : 'pos'}">${o.joue > 1 ? '+' : '−'}${Math.abs(100 * (o.joue - 1)).toFixed(1).replace('.', ',')} %</td></tr>`).join('');
+
+  drawVar(); drawDec(); drawSig();
+}
+[['cvVar', hoverVar, drawVar], ['cvDec', hoverDec, drawDec], ['cvSig', hoverSig, drawSig]]
+  .forEach(([id, hv, dr]) => {
+    const cv = document.getElementById(id);
+    cv.addEventListener('pointermove', hv);
+    cv.addEventListener('pointerleave', () => { tipHide(); dr(); });
+  });
+addEventListener('resize', () => {
+  if (!document.getElementById('tab-pop').classList.contains('hide')) {
+    drawVar(); drawDec(); drawSig();
+  }
+});
+
+/* ==================== DESSIN ==================== */
+function dessiner(cv, serie, bandes, zeroLine, unit) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const x = cv.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.scale(dpr, dpr); x.clearRect(0, 0, w, h);
+  if (!serie.length) return;
+  const all = serie.concat(bandes[0] || [], bandes[1] || [], bandes[2] || [], zeroLine ? [0] : []);
+  let mn = Math.min(...all), mx = Math.max(...all); if (mn === mx) { mn -= 1; mx += 1; }
+  const pad = (mx - mn) * .08; mn -= pad; mx += pad;
+  const px = i => 34 + i * (w - 44) / Math.max(1, serie.length - 1);
+  const py = v => h - 18 - (v - mn) / (mx - mn) * (h - 30);
+  if ((bandes[0] || []).length) {
+    x.fillStyle = 'rgba(77,163,255,.16)'; x.beginPath();
+    bandes[1].forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
+    for (let i = bandes[0].length - 1; i >= 0; i--) x.lineTo(px(i), py(bandes[0][i]));
+    x.closePath(); x.fill();
+  }
+  if ((bandes[2] || []).length) {
+    x.strokeStyle = '#ffb454'; x.setLineDash([4, 4]); x.lineWidth = 1.4; x.beginPath();
+    bandes[2].forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
+    x.stroke(); x.setLineDash([]);
+  }
+  if (zeroLine) { x.strokeStyle = '#43506a'; x.lineWidth = 1; x.beginPath(); x.moveTo(34, py(0)); x.lineTo(w - 10, py(0)); x.stroke(); }
+  x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath();
+  serie.forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v))); x.stroke();
+  x.fillStyle = '#fff'; serie.forEach((v, i) => { x.beginPath(); x.arc(px(i), py(v), 2.6, 0, 7); x.fill(); });
+  x.fillStyle = '#8b9bb4'; x.font = '10px system-ui';
+  x.fillText(mx.toFixed(0) + (unit || ''), 3, 12); x.fillText(mn.toFixed(0) + (unit || ''), 3, h - 6);
+}
+
+bDate.value = new Date().toISOString().slice(0, 10);
+majMise();
+</script>
+</body>
+</html>
