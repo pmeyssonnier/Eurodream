@@ -395,3 +395,44 @@ Graphiques : barres horizontales en échelle logarithmique (sur-dispersion), bar
 divergentes autour de la moyenne (déciles), nuage de points avec étiquetage
 non chevauchant (signes). Palette de marques `#3987e5` / `#d95926` validée sur la
 surface `#0d1117` (bande de clarté OKLCH, ΔE CVD 26,8, contraste ≥ 3:1).
+
+## Contre-audit : trois objections externes, testées (`scripts/17_contre_audit_reglement.py`)
+
+Trois objections m'ont été opposées sur la base du règlement officiel. Les trois sont
+fondées ; la v5 de l'application est corrigée en conséquence. Aucune ne change le TRJ
+du joueur, deux changent l'interprétation et une change un chiffre.
+
+**O1 — Le Fonds de Réserve explique les 7,5 points manquants. VALIDÉE.**
+Le règlement EuroDreams prévoit que 45,21 % de l'« argent des lots » (= 52 % des mises)
+part au Fonds de Réserve, qui finance les rangs 1-2 et les tirages/promotions. Le
+reliquat, `52 % × (1 − 45,21 %) = 28,4908 %`, doit aller aux rangs 3-6. Je mesure
+**28,4430 %** sur 297 tirages : concordance à **0,048 point**. Le Fonds reçoit
+`52 % × 45,21 % = 23,5092 %` de la mise alors que l'espérance des rangs 1-2 n'en
+consomme que **16,0068 %** — différence **7,5024 %**, soit exactement l'écart que je
+constatais. Il n'était donc pas inexpliqué mais structurel : les 52 % sont exacts au
+niveau de la famille de jeux, faux au niveau d'un tirage ordinaire. TRJ du joueur
+inchangé : 44,45 % nominal, 39,35 % actualisé.
+
+**O2 — Les probabilités Joker+ des rangs 1 et 2 doivent être structurelles. VALIDÉE.**
+La loi « k chiffres alignés depuis l'une des deux extrémités », `p = 2 × 0,9 × 10⁻ᵏ`,
+est vérifiée à quatre décimales sur 642 M de grilles (ratios observé/théorique :
+0,9999 · 0,9996 · 1,0006 · 0,9992 · 1,0032 pour les rangs 7 à 3). Pour k = 6 les deux
+extrémités se confondent, donc `p = 10⁻⁶` exactement, réparti 1/12 – 11/12 par le
+signe. Mes constantes empiriques (1/11 265 001 et 1/1 052 631) reposaient sur 57 et 610
+événements ; les valeurs structurelles (**1/12 000 000** et **11/12 × 10⁻⁶**) tombent
+dans leurs IC95 (57 observés contre 53,5 attendus, p = 0,67). Conséquences : la pente
+de cagnotte passe de 5,92 à **5,56 points de TRJ par million**, le seuil d'espérance
+nulle de 8 989 302 € à **9 575 820 €**, et le modèle colle mieux au réel — il prédit
+52,53 % contre 52,39 % effectivement versés, là où l'ancienne pente donnait 52,90 %.
+
+**O3 — Les 6 chiffres du Joker+ ne sont pas choisis par le joueur. VALIDÉE.**
+Seul le signe du zodiaque est choisi. Mes propres mesures le confirment : l'amplitude
+de la part jouée vaut **×1,213** pour les signes contre **×1,011** (1er chiffre) et
+**×1,007** (dernier chiffre) — un excès 19 fois plus grand d'un côté que de l'autre.
+L'écart de ~1 % sur les chiffres est réel et significatif sur 642 M de grilles, mais il
+provient du stock de numéros attribués aux tickets, pas d'un choix humain, et n'est de
+toute façon pas exploitable. Le levier anti-partage Joker+ tombe donc de **+0,572
+point** (signe + chiffres) à **+0,436 point** (signe seul). Ce que l'objection ne
+touche pas : la sur-dispersion EuroDreams (Var(z) = 54,22 au rang 6), où les numéros
+sont bien cochés par le joueur — elle la renforce, en faisant du Joker+ à Var(z) = 2,20
+un témoin propre de ce que donne un jeu à grilles non choisies.
