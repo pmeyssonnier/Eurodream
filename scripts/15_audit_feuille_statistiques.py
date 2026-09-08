@@ -95,7 +95,7 @@ print(f"  d'un |z| est de {sim.mean():.2f} en moyenne : P(max|z| ≥ {pal.z.abs(
 print("  → l'écart entre le signe le plus et le moins sorti est ORDINAIRE.")
 print("\n  La colonne « plus sorti depuis (# tirages) » :")
 d=pal.depuis.astype(int).values
-print(f"    valeurs {sorted(d)} | moyenne {d.mean():.1f} | attendu sous uniformité 11,0")
+print(f"    valeurs {[int(x) for x in sorted(d)]} | moyenne {d.mean():.1f} | attendu sous uniformité 11,0")
 print(f"    test de Kolmogorov-Smirnov contre une loi géométrique(1/12) : "
       f"p = {stats.kstest(d, lambda x: 1-(11/12)**np.floor(x+1)).pvalue:.3f}")
 print("    → conforme. Un signe « en retard » n'a aucune probabilité accrue de sortir :")
