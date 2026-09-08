@@ -109,3 +109,53 @@ partagé (rangs 2 à 8 : montants fixes). Jouer le profil le moins populaire plu
 que le plus populaire vaut au mieux **+0,44 à +0,57 point de TRJ**, contre 46,80 %
 de TRJ hors jackpot. La conclusion A de l'audit est donc **validée empiriquement
 pour la première fois — et simultanément réduite à une quantité négligeable.**
+
+## Correction majeure — les données EuroDreams réelles (2023-2026)
+
+297 tirages officiels, du 2023-11-06 au 2026-09-07, **tous un lundi (149) ou un
+jeudi (148)**. 140,7 M€ misés, 56,3 M de grilles à 2,50 €.
+
+### Le relevé du joueur EST bien EuroDreams
+
+Avec un décalage de **un jour** (débit le lendemain du tirage) : 61/61 lignes se
+rattachent à un tirage (60 à J-1, 1 à J-0) et **56/61 montants se reconcilient
+exactement** avec les tables de gains réelles + Joker+. L'anomalie de calendrier
+relevée précédemment a donc une explication bénigne, et la conclusion
+« ce n'est pas EuroDreams » était **fausse**.
+
+### La table de gains réelle remplace la table supposée
+
+| Rang | Hypothèse de l'audit | Réalité mesurée (297 tirages) |
+|---|---|---|
+| R1 (6+D) | 7 200 000 € | 7 200 000 € **fixe** (2 gagnants) ✓ |
+| R2 (6) | 120 000 € | 120 000 € **fixe** (13 gagnants) ✓ |
+| R3 (5) | 500 € fixe | **parimutuel** : 34,70 → 990,50 €, médiane 125,20 € |
+| R4 (4) | 20 ou 30 € fixe | **parimutuel** : 17,40 → 65,70 €, moyenne 38,75 € |
+| R5 (3) | 5 € fixe | **parimutuel** : 3,00 → 7,90 €, moyenne 5,16 € |
+| R6 (2) | 2,50 € fixe | 2,50 € **fixe** ✓ |
+
+Les probabilités combinatoires du script 01 sont **confirmées** par les fréquences
+réelles (ratio observé/théorique : 1,002 au rang 6, 1,006 au rang 5, 1,009 au rang 4).
+
+### Le TRJ réel
+
+```
+TRJ mesuré sur 297 tirages          : 39,79 %   (dominé par 2 jackpots)
+  hors rangs 1 et 2                 : 28,44 %   (théorique 28,46 % — exact)
+TRJ de long terme, tables réelles   : 44,47 % nominal
+                                      39,35 % actualisé à 3 %
+TRJ officiel annoncé                : 52,00 %
+```
+
+L'écart de ~8 points avec les 52 % annoncés est donc **mesuré**, plus supposé.
+
+**Changement de régime en octobre 2025** : la médiane du rang 3 passe de 103 € à
+496 €, mais le TRJ des rangs 3-6 reste inchangé (28,54 % → 28,30 %). Simple
+réallocation entre rangs : **effet nul pour le joueur.**
+
+### Le benchmark du joueur, exact
+
+Espérance calculée sur les tables réelles de ses 61 tirages effectifs :
+gains EuroDreams attendus 173,28 € + Joker+ hors jackpot 42,82 € = **215,91 €**
+attendus contre **231,90 €** encaissés, soit un ratio de **1,074**.
+TRJ de portefeuille attendu 30,78 % contre 33,06 % observé.
