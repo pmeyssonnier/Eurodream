@@ -217,3 +217,76 @@ figées, et l'espérance du portefeuille se recalcule.
 Graphiques : palette de marques **validée** (`#3987e5` / `#d95926`, bande de clarté
 OKLCH dark, ΔE CVD 26,8, contraste ≥ 3:1), survol avec réticule et infobulle,
 légende, étiquettes directes sélectives, vue tableau.
+
+## Analyse des fichiers `eurodreams-financialdata-FR-yyyy.csv`
+
+`scripts/14_analyse_financiere_eurodreams.py` — 297 tirages, 4 fichiers,
+0 doublon, 0 valeur manquante, écarts de 3 et 4 jours uniquement (lundi/jeudi).
+140,69 M€ misés · 56,28 M de grilles · 26,85 M de participations · 2,08 grilles
+par participation.
+
+### Règle de répartition reconstituée
+
+| Rang | Part de la mise | CV | Nature |
+|---|---|---|---|
+| R1 | 14,11 % | 12,21 | fixe (7 200 000 €, 2 versements) |
+| R2 | 1,21 % | 4,73 | fixe (120 000 €, 13 versements) |
+| R3 | 0,50 % | 0,90 | parimutuel |
+| R4 | 3,36 % | 0,155 | parimutuel |
+| R5 | 6,42 % | 0,099 | parimutuel |
+| R6 | 18,17 % | 0,037 | fixe (2,50 €) |
+
+Le changement d'octobre 2025, au millième près :
+
+```
+2023-11 → 2025-09 : R3 0,221 % | R4 3,554 % | R5 6,541 % | R6 18,135 % | total 28,451 %
+2025-10 → 2026-09 : R3 1,082 % | R4 2,962 % | R5 6,171 % | R6 18,237 % | total 28,452 %
+```
+
+Le rang 3 est multiplié par 4,9, financé par les rangs 4 et 5. **Le total ne bouge
+pas d'un millième.** Réallocation pure, effet nul pour le joueur.
+
+### Les joueurs choisissent leurs numéros — et ça se mesure
+
+Si les grilles étaient réparties au hasard, le nombre de gagnants suivrait une
+binomiale exacte et les résidus standardisés auraient une variance de 1.
+
+| Rang | p obs / p théo | Var(z) |
+|---|---|---|
+| R6 (2 n°) | 1,002 | **54,22** |
+| R5 (3 n°) | 1,006 | **33,49** |
+| R4 (4 n°) | 1,009 | 8,31 |
+| R3 (5 n°) | 1,040 | 1,85 |
+| *Joker+ (numéros non choisis)* | *1,000* | *2,20* |
+
+La moyenne colle à la théorie à trois décimales ; la **variance est 54 fois trop
+grande**. Le nombre de gagnants au rang 5 va de 3 678 à 18 891 (×5,1) là où le
+bruit binomial donnerait ±2,8 %.
+
+### Ce que vaut réellement le levier anti-partage sur EuroDreams
+
+Le lot parimutuel est le pool divisé par les gagnants : ρ(sur-représentation des
+gagnants, lot) = **−0,843** au rang 5, −0,665 au rang 4.
+
+| | TRJ rangs 3-6 | écart |
+|---|---|---|
+| lot du décile bas (grille populaire) | 26,08 % | −2,38 pt |
+| lot moyen | 28,46 % | — |
+| lot du décile haut (grille impopulaire) | 31,36 % | **+2,89 pt** |
+
+**Borne supérieure du levier : +2,89 points** — six fois plus que les +0,44 point
+mesurés sur le Joker+, où les numéros ne sont pas choisis. C'est une borne : elle
+suppose de toucher systématiquement le décile favorable, ce qu'aucune grille ne
+garantit.
+
+### Autres résultats
+
+- Participation en chute : 386 457 grilles/tirage sur les 10 premiers tirages,
+  149 668 sur les 10 derniers (**−61,3 %**, Spearman ρ = −0,290, p = 3,5·10⁻⁷).
+- Aucune différence lundi / jeudi (p = 0,463). Creux estival marqué (juillet
+  151 991 grilles contre 190 000 en moyenne).
+- Rangs 1 et 2 parfaitement poissoniens : 2 jackpots observés pour 2,93 attendus
+  (p = 0,88), 13 rangs 2 pour 11,73 (p = 0,79). Jamais de report, jamais de partage.
+- TRJ hors rangs 1-2 **constant à 28,4 % sur les quatre années** (28,36 / 28,34 /
+  28,56 / 28,46). TRJ total 39,79 %, gonflé par les 2 jackpots de 2025.
+- 100 % des lots sont arrondis au dixième d'euro.
