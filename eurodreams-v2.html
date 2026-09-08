@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EuroDreams — Générateur & Bankroll</title>
+<style>
+:root{--bg:#11151c;--card:#1a212c;--line:#2b3648;--txt:#e6edf5;--mut:#8b9bb4;--acc:#4da3ff;--ok:#3ddc97;--bad:#ff6b6b;--warn:#ffb454}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+h1{font-size:19px;margin:0 0 4px}h2{font-size:15px;margin:0 0 10px;color:var(--acc)}
+.sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 4px}
+input,select,button{font:inherit;background:#0d1117;color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%}
+button{background:var(--acc);color:#03121f;border:0;font-weight:600;cursor:pointer;margin-top:12px}
+button.sec{background:#243044;color:var(--txt)}
+button.dgr{background:#3a2027;color:#ffb0b0}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{margin:0;background:#243044;color:var(--mut)}
+.tabs button.on{background:var(--acc);color:#03121f}
+.grille{border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:9px;background:#141a24}
+.balls{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.b{width:36px;height:36px;border-radius:50%;background:#22304a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.b.hi{background:#2f5d3f;color:#c9ffe2}.b.dream{background:var(--warn);color:#241a00}
+.meta{font-size:12px;color:var(--mut);margin-top:7px}
+.tag{display:inline-block;background:#2a2130;color:#ffb0b0;border-radius:5px;padding:1px 6px;margin:2px 4px 0 0;font-size:11px}
+.bar{height:9px;background:#0d1117;border-radius:5px;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%;background:var(--acc)}
+.freq{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-size:11px}
+.warn{background:#2a1f14;border-color:#5a4326;color:#ffd8a8;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 4px;text-align:right;border-bottom:1px solid var(--line)}
+th{color:var(--mut);font-weight:500;font-size:11px}td:first-child,th:first-child{text-align:left}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.kpi div{background:#141a24;border:1px solid var(--line);border-radius:8px;padding:8px}
+.kpi b{display:block;font-size:18px;margin-top:2px}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+canvas{width:100%;height:190px;display:block;background:#0d1117;border-radius:8px;margin-top:6px}
+.x{cursor:pointer;color:var(--bad);font-weight:700;padding:0 6px}
+.hide{display:none}
+</style>
+</head>
+<body>
+
+<h1>EuroDreams — Générateur & Bankroll</h1>
+<div class="sub">6/40 + 1 Dream/5 — 19 191 900 combinaisons — espérance structurelle négative</div>
+
+<div class="tabs">
+  <button class="on" data-t="gen">Générateur</button>
+  <button data-t="bank">Bankroll</button>
+</div>
+
+<!-- ================= GÉNÉRATEUR ================= -->
+<div id="tab-gen">
+
+<div class="card warn">
+<b>Ce que fait cet outil.</b> Il ne prédit rien : toutes les combinaisons ont la même probabilité.
+Il optimise la seule variable contrôlable — éviter les grilles que beaucoup de joueurs cochent.
+Les rangs 3, 4 et 5 sont parimutuels, les rangs 1–2 plafonnés/partagés : à probabilité identique,
+une grille impopulaire rapporte <b>plus par gagnant</b>. Gain conditionnel, pas gain d'espérance.
+</div>
+
+<div class="card">
+<h2>1. Historique (optionnel)</h2>
+<label>Fichiers CSV FDJ (Date;Numéro 1;…;DreamNumber)</label>
+<input type="file" id="csv" multiple accept=".csv">
+<div id="stats" class="meta"></div>
+</div>
+
+<div class="card">
+<h2>2. Paramètres</h2>
+<div class="row">
+  <div><label>Nb de grilles</label><input type="number" id="nGrilles" value="5" min="1" max="30"></div>
+  <div><label>Sévérité anti-partage</label>
+    <select id="sev"><option value="0">Aucune (pur hasard)</option><option value="1">Modérée</option><option value="2" selected>Forte</option><option value="3">Maximale</option></select></div>
+</div>
+<div class="row">
+  <div><label>Stratégie</label>
+    <select id="strat"><option value="disj" selected>Disjointes</option><option value="libre">Indépendantes</option></select></div>
+  <div><label>Dream</label>
+    <select id="dreamMode"><option value="rand" selected>Aléatoire</option><option value="spread">Étalé 1–5</option></select></div>
+</div>
+<button id="go">Générer</button>
+<button id="copy" class="sec">Copier les grilles</button>
+</div>
+
+<div id="out"></div>
+</div>
+
+<!-- ================= BANKROLL ================= -->
+<div id="tab-bank" class="hide">
+
+<div class="card">
+<h2>Saisie d'un tirage</h2>
+<div class="row">
+  <div><label>Date</label><input type="date" id="bDate"></div>
+  <div><label>Mise (€)</label><input type="number" id="bMise" step="0.50" value="11.50"></div>
+  <div><label>Gain (€)</label><input type="number" id="bGain" step="0.50" value="0"></div>
+</div>
+<button id="bAdd">Ajouter</button>
+<div class="row">
+  <button id="bDemo" class="sec">Charger mes 61 tirages</button>
+  <button id="bClear" class="dgr">Tout effacer</button>
+</div>
+</div>
+
+<div class="card" id="bKpi"></div>
+
+<div class="card">
+<h2>Solde cumulé</h2>
+<canvas id="cCum"></canvas>
+<div class="meta">Ligne blanche = solde réel. Zone bleue = enveloppe P5–P95 simulée sous les règles du jeu. Ligne pointillée = espérance théorique.</div>
+</div>
+
+<div class="card">
+<h2>Taux de retour cumulé</h2>
+<canvas id="cTrj"></canvas>
+<div class="meta">Convergence de <code>gains/mises</code> vers le taux structurel. Les premiers points ne veulent rien dire.</div>
+</div>
+
+<div class="card">
+<h2>Position vs. hasard pur</h2>
+<div id="bMc" class="meta"></div>
+</div>
+
+<div class="card">
+<h2>Paramètres du modèle</h2>
+<div class="row">
+  <div><label>Prix d'une grille (€)</label><input type="number" id="pGrille" step="0.10" value="2.50"></div>
+  <div><label>Simulations</label><input type="number" id="pSim" value="4000" step="1000"></div>
+</div>
+<label>Gains moyens par rang (€) — ajustables</label>
+<table id="tRangs"></table>
+<button id="bRecalc" class="sec">Recalculer</button>
+<div id="bEv" class="meta"></div>
+</div>
+
+<div class="card">
+<h2>Historique saisi</h2>
+<table id="tBank"></table>
+</div>
+</div>
+
+<script>
+"use strict";
+/* =============== ONGLETS =============== */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  document.getElementById('tab-gen').classList.toggle('hide', b.dataset.t !== 'gen');
+  document.getElementById('tab-bank').classList.toggle('hide', b.dataset.t !== 'bank');
+  if (b.dataset.t === 'bank') renderBank();
+});
+
+/* =============== HISTORIQUE TIRAGES =============== */
+let HIST = [], FREQ = new Array(41).fill(0);
+const SET_HIST = new Set();
+const key = a => a.join('-');
+
+document.getElementById('csv').addEventListener('change', async e => {
+  HIST = []; SET_HIST.clear(); FREQ = new Array(41).fill(0);
+  for (const f of e.target.files) {
+    const txt = (await f.text()).replace(/^\uFEFF/, '');
+    txt.split(/\r?\n/).slice(1).forEach(l => {
+      const c = l.split(';'); if (c.length < 8) return;
+      const n = c.slice(1, 7).map(Number).sort((a, b) => a - b);
+      if (n.some(x => !x || x < 1 || x > 40)) return;
+      HIST.push({ d: c[0], n, dream: +c[7] }); SET_HIST.add(key(n)); n.forEach(x => FREQ[x]++);
+    });
+  }
+  renderStats();
+});
+
+function renderStats() {
+  const el = document.getElementById('stats');
+  if (!HIST.length) { el.textContent = ''; return; }
+  const N = HIST.length, exp = N * 6 / 40;
+  let chi2 = 0; for (let i = 1; i <= 40; i++) chi2 += (FREQ[i] - exp) ** 2 / exp;
+  const max = Math.max(...FREQ.slice(1));
+  let h = `<b>${N} tirages</b> · attendu ${exp.toFixed(1)}/n° · χ² = ${chi2.toFixed(1)} (39 ddl) → ` +
+    (chi2 < 54.6 ? '<span style="color:var(--ok)">compatible avec l\'uniformité</span>' : '<span style="color:var(--warn)">écart notable</span>') +
+    '<div class="freq" style="margin-top:8px">';
+  for (let i = 1; i <= 40; i++)
+    h += `<div>${i} <span style="color:#fff">${FREQ[i]}</span><div class="bar"><i style="width:${100 * FREQ[i] / max}%"></i></div></div>`;
+  el.innerHTML = h + '</div>';
+}
+
+/* =============== SCORING =============== */
+function score(c) {
+  let s = 100; const r = [];
+  const somme = c.reduce((a, b) => a + b, 0);
+  const hauts = c.filter(n => n > 31).length;
+  s += hauts * 9;
+  if (hauts === 0) { s -= 40; r.push("grille 'date de naissance' (aucun n° > 31)"); } else if (hauts === 1) s -= 8;
+  if (c.filter(n => n <= 12).length >= 4) { s -= 16; r.push("4+ numéros ≤ 12 (mois)"); }
+  const d = Math.abs(somme - 123);
+  if (d < 12) { s -= 14; r.push("somme très centrale (" + somme + ")"); }
+  else if (d > 62) { s -= 10; r.push("somme extrême (" + somme + ")"); } else s += 9;
+  let cons = 0; for (let i = 1; i < 6; i++) if (c[i] - c[i - 1] === 1) cons++;
+  if (cons >= 3) { s -= 32; r.push(cons + " paires consécutives"); } else if (cons === 2) s -= 9;
+  const pas = c[1] - c[0];
+  if (c.every((v, i) => i === 0 || v - c[i - 1] === pas)) { s -= 50; r.push("suite arithmétique"); }
+  for (const m of [2, 3, 5, 7]) if (c.every(n => n % m === 0)) { s -= 26; r.push("tous multiples de " + m); }
+  const diz = new Set(c.map(n => (n - 1) / 10 | 0)).size;
+  if (diz <= 2) { s -= 11; r.push("concentré sur " + diz + " dizaine(s)"); } else s += 6;
+  const t = {}; c.forEach(n => t[n % 10] = (t[n % 10] || 0) + 1);
+  if (Math.max(...Object.values(t)) >= 4) { s -= 16; r.push("4+ mêmes terminaisons"); }
+  const pairs = c.filter(n => n % 2 === 0).length;
+  if (pairs === 0 || pairs === 6) { s -= 12; r.push("tout pair / tout impair"); }
+  if (SET_HIST.has(key(c))) { s -= 22; r.push("combinaison déjà sortie"); }
+  return { s, r, somme, hauts, diz, cons, pairs };
+}
+
+const SEUILS = { 0: -1e9, 1: 100, 2: 118, 3: 132 };
+function tirage() {
+  const p = []; for (let i = 1; i <= 40; i++) p.push(i);
+  for (let i = 39; i > 0; i--) { const j = Math.random() * (i + 1) | 0;[p[i], p[j]] = [p[j], p[i]]; }
+  return p.slice(0, 6).sort((a, b) => a - b);
+}
+function generer(n, sev, strat, dreamMode) {
+  const seuil = SEUILS[sev], res = [], used = new Set(); let essais = 0;
+  while (res.length < n && essais < 400000) {
+    essais++; const c = tirage();
+    if (strat === 'disj' && c.filter(x => used.has(x)).length > 1) continue;
+    const sc = score(c); if (sc.s < seuil) continue;
+    if (res.some(g => g.c.filter(x => c.includes(x)).length > 4)) continue;
+    c.forEach(x => used.add(x)); res.push({ c, ...sc });
+  }
+  if (dreamMode === 'spread') {
+    const pool = []; while (pool.length < res.length) pool.push(1, 2, 3, 4, 5);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0;[pool[i], pool[j]] = [pool[j], pool[i]]; }
+    res.forEach((g, i) => g.dream = pool[i]);
+  } else res.forEach(g => g.dream = 1 + (Math.random() * 5 | 0));
+  return res;
+}
+
+let DERNIER = [];
+document.getElementById('go').onclick = () => {
+  const n = Math.max(1, Math.min(30, +nGrilles.value));
+  const g = generer(n, +sev.value, strat.value, dreamMode.value); DERNIER = g;
+  const out = document.getElementById('out');
+  if (!g.length) { out.innerHTML = '<div class="card warn">Aucune grille trouvée : assouplis la sévérité.</div>'; return; }
+  let h = `<div class="card"><h2>${g.length} grille(s) — coût ${(g.length * 2.5).toFixed(2)} €</h2>`;
+  g.forEach((x, i) => {
+    h += `<div class="grille"><div class="balls">${x.c.map(v => `<span class="b${v > 31 ? ' hi' : ''}">${v}</span>`).join('')}
+      <span style="color:var(--mut)">·</span><span class="b dream">${x.dream}</span></div>
+      <div class="meta">#${i + 1} — impopularité <b>${x.s}</b> · somme ${x.somme} · ${x.hauts} n°&gt;31 · ${x.diz} dizaines
+      ${x.r.map(t => `<span class="tag">${t}</span>`).join('')}</div></div>`;
+  });
+  const u = new Set(); g.forEach(x => x.c.forEach(v => u.add(v)));
+  const p = 1 - Math.pow(1 - 823939 / 3838380, g.length);
+  h += `<div class="meta">Couverture <b>${u.size}/40</b>. P(≥1 rang gagnant) ≈ <b>${(100 * p).toFixed(1)} %</b>.
+    P(rang 1) = ${g.length}/19 191 900. Espérance ≈ <b>−48 %</b> de la mise, quelle que soit la grille.</div></div>`;
+  out.innerHTML = h;
+};
+document.getElementById('copy').onclick = () => {
+  if (!DERNIER.length) return;
+  const t = DERNIER.map(x => x.c.join(' - ') + '  | Dream ' + x.dream).join('\n');
+  navigator.clipboard.writeText(t).then(() => alert('Copié :\n\n' + t), () => alert(t));
+};
+
+/* =============== BANKROLL =============== */
+const LS = 'eurodreams_bankroll_v1', LSR = 'eurodreams_rangs_v1';
+let BANK = JSON.parse(localStorage.getItem(LS) || '[]');
+const RANGS_DEF = [
+  { n: 'Rang 1 — 6 n° + Dream', p: 1 / 19191900, g: 7200000 },
+  { n: 'Rang 2 — 6 n°', p: 4 / 19191900, g: 120000 },
+  { n: 'Rang 3 — 5 n°', p: 204 / 3838380, g: 500 },
+  { n: 'Rang 4 — 4 n°', p: 8415 / 3838380, g: 30 },
+  { n: 'Rang 5 — 3 n°', p: 119680 / 3838380, g: 5 },
+  { n: 'Rang 6 — 2 n°', p: 695640 / 3838380, g: 2.5 }
+];
+let RANGS = JSON.parse(localStorage.getItem(LSR) || 'null') || RANGS_DEF.map(r => ({ ...r }));
+
+const save = () => { localStorage.setItem(LS, JSON.stringify(BANK)); localStorage.setItem(LSR, JSON.stringify(RANGS)); };
+const eur = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+document.getElementById('bAdd').onclick = () => {
+  const d = bDate.value || new Date().toISOString().slice(0, 10);
+  BANK.push({ d, m: +bMise.value || 0, g: +bGain.value || 0 });
+  BANK.sort((a, b) => a.d < b.d ? -1 : 1); save(); renderBank();
+};
+document.getElementById('bDemo').onclick = () => {
+  BANK = [['2025-09-05',7],['2025-09-09',0],['2025-09-12',2],['2025-09-16',2.5],['2025-09-19',4],
+  ['2025-09-23',4.5],['2025-09-26',0],['2025-09-30',5],['2025-10-03',0],['2025-10-07',0],
+  ['2025-10-10',2.5],['2025-10-14',4.5],['2025-10-17',2.5],['2025-10-21',0],
+  ['2025-11-07',2.5],['2025-11-11',2.5],['2025-11-14',2.5],['2025-11-18',1.5],['2025-11-21',2.5],
+  ['2025-11-25',0],['2025-11-28',0],['2025-12-02',6.5],['2025-12-05',7.3],['2025-12-09',11.7],
+  ['2025-12-12',7],['2025-12-16',1.5],['2025-12-19',4],['2025-12-30',0],['2026-01-02',4.5],
+  ['2026-01-06',7.5],['2026-01-09',2.5],['2026-01-13',2],['2026-01-16',0],['2026-01-20',0],
+  ['2026-01-27',2.5],['2026-01-30',2.5],['2026-02-03',9],['2026-02-06',2.5],['2026-02-10',0],
+  ['2026-02-13',0],['2026-02-17',0],['2026-04-27',4],['2026-04-28',7.5],['2026-05-01',0],
+  ['2026-05-05',0],['2026-05-08',5.5],['2026-05-12',2.5],['2026-05-15',2.5],['2026-05-22',2.5],
+  ['2026-05-26',0],['2026-05-29',10.4],['2026-06-02',2.5],['2026-06-05',5],['2026-06-09',38.5],
+  ['2026-06-12',2.5],['2026-06-16',20],['2026-06-19',2.5],['2026-06-23',2],['2026-06-26',0],
+  ['2026-06-30',2],['2026-07-03',5]].map(x => ({ d: x[0], m: 11.5, g: x[1] }));
+  save(); renderBank();
+};
+document.getElementById('bClear').onclick = () => { if (confirm('Effacer tout l\'historique ?')) { BANK = []; save(); renderBank(); } };
+document.getElementById('bRecalc').onclick = () => {
+  document.querySelectorAll('#tRangs input').forEach((inp, i) => RANGS[i].g = +inp.value || 0);
+  save(); renderBank();
+};
+
+/* --- Monte Carlo : distribution du gain total sur nGrilles --- */
+function simuler(nGrilles, nSim) {
+  const cum = []; let acc = 0;
+  RANGS.forEach(r => { acc += r.p; cum.push({ c: acc, g: r.g }); });
+  const totaux = new Float64Array(nSim);
+  for (let s = 0; s < nSim; s++) {
+    let t = 0;
+    for (let k = 0; k < nGrilles; k++) {
+      const u = Math.random();
+      for (let i = 0; i < cum.length; i++) if (u < cum[i].c) { t += cum[i].g; break; }
+    }
+    totaux[s] = t;
+  }
+  return totaux; // NON trié : trier au point d'appel (sinon dépendance comonotone entre tirages)
+}
+const pct = (arr, q) => arr[Math.min(arr.length - 1, Math.floor(q * arr.length))];
+
+function renderBank() {
+  const prix = +pGrille.value || 2.5;
+  const evUnit = RANGS.reduce((a, r) => a + r.p * r.g, 0);
+  document.getElementById('bEv').innerHTML =
+    `Espérance modèle : <b>${eur(evUnit)}</b> par grille de ${eur(prix)} → taux de retour théorique <b>${(100 * evUnit / prix).toFixed(1)} %</b>.
+     Le taux officiel annoncé est 52 % ; l'écart vient de la réserve non redistribuée sur les rangs 1–2.`;
+
+  document.getElementById('tRangs').innerHTML = '<tr><th>Rang</th><th>1 chance sur</th><th>Gain moyen</th></tr>' +
+    RANGS.map(r => `<tr><td>${r.n}</td><td>${Math.round(1 / r.p).toLocaleString('fr-FR')}</td>
+      <td style="width:90px"><input type="number" value="${r.g}" step="0.5"></td></tr>`).join('');
+
+  const tb = document.getElementById('tBank');
+  if (!BANK.length) {
+    document.getElementById('bKpi').innerHTML = '<h2>Statistiques</h2><div class="meta">Aucun tirage saisi.</div>';
+    tb.innerHTML = ''; document.getElementById('bMc').textContent = '';
+    dessiner(cCum, [], []); dessiner(cTrj, [], []); return;
+  }
+
+  /* KPI */
+  const M = BANK.reduce((a, x) => a + x.m, 0), G = BANK.reduce((a, x) => a + x.g, 0);
+  const gains = BANK.map(x => x.g).slice().sort((a, b) => a - b);
+  const med = gains.length % 2 ? gains[(gains.length - 1) / 2] : (gains[gains.length / 2 - 1] + gains[gains.length / 2]) / 2;
+  const maxG = Math.max(...gains), sansMax = G - maxG, misesSansMax = M - BANK.find(x => x.g === maxG).m;
+  const trj = G / M, solde = G - M, nG = M / prix;
+  const cls = v => v >= 0 ? 'pos' : 'neg';
+  document.getElementById('bKpi').innerHTML = `<h2>Statistiques — ${BANK.length} tirages</h2><div class="kpi">
+    <div>Total misé<b>${eur(M)}</b></div>
+    <div>Total gagné<b>${eur(G)}</b></div>
+    <div>Solde<b class="${cls(solde)}">${solde >= 0 ? '+' : ''}${eur(solde)}</b></div>
+    <div>Taux de retour<b class="${trj >= evUnit / prix ? 'pos' : 'neg'}">${(100 * trj).toFixed(1)} %</b></div>
+    <div>Gain médian<b>${eur(med)}</b></div>
+    <div>Gain moyen<b>${eur(G / BANK.length)}</b></div></div>
+    <div class="meta">Plus gros gain = <b>${eur(maxG)}</b>, soit <b>${(100 * maxG / G).toFixed(0)} %</b> du total encaissé.
+    Sans lui : ${eur(sansMax)} rendus sur ${eur(misesSansMax)} misés → <b>${(100 * sansMax / misesSansMax).toFixed(1)} %</b>.
+    L'écart entre médiane (${eur(med)}) et moyenne (${eur(G / BANK.length)}) mesure la dépendance à un seul coup.
+    Équivalent ≈ <b>${nG.toFixed(0)} grilles</b> jouées.</div>`;
+
+  /* Courbes */
+  let c = 0; const soldes = BANK.map(x => c += x.g - x.m);
+  let cm = 0, cg = 0; const trjs = BANK.map(x => { cm += x.m; cg += x.g; return 100 * cg / cm; });
+
+  const nSim = Math.max(500, +pSim.value || 4000);
+  const grillesParTirage = BANK.map(x => Math.round(x.m / prix));
+  let cumG = 0; const bandeP5 = [], bandeP95 = [], bandeEv = [];
+  const sims = [];
+  for (let s = 0; s < nSim; s++) sims.push(0);
+  let gTot = 0;
+  BANK.forEach((x, i) => {
+    gTot += grillesParTirage[i];
+    const t = simuler(grillesParTirage[i], nSim);
+    for (let s = 0; s < nSim; s++) sims[s] += t[s];
+    const srt = sims.slice().sort((a, b) => a - b);
+    cumG += x.m;
+    bandeP5.push(pct(srt, 0.05) - cumG); bandeP95.push(pct(srt, 0.95) - cumG);
+    bandeEv.push(gTot * evUnit - cumG);
+  });
+  dessiner(cCum, soldes, [bandeP5, bandeP95, bandeEv], true);
+  dessiner(cTrj, trjs, [[], [], BANK.map(() => 100 * evUnit / prix)], false, '%');
+
+  /* Position vs hasard */
+  const tot = simuler(Math.round(nG), nSim).slice().sort((a, b) => a - b);
+  let rang = 0; while (rang < tot.length && tot[rang] < G) rang++;
+  const perc = 100 * rang / tot.length;
+  const nul = tot.filter(v => v === 0).length;
+  document.getElementById('bMc').innerHTML =
+    `Sur <b>${nSim.toLocaleString('fr-FR')}</b> joueurs simulés ayant joué les mêmes <b>${nG.toFixed(0)} grilles</b> :<br>
+     médiane des gains = <b>${eur(pct(tot, 0.5))}</b> · P5 = ${eur(pct(tot, 0.05))} · P95 = ${eur(pct(tot, 0.95))}<br>
+     Ton résultat (${eur(G)}) te place au <b>${perc.toFixed(0)}<sup>e</sup> percentile</b>.
+     ${perc > 50 ? 'Au-dessus de la médiane — chance, pas performance.' : 'En dessous de la médiane.'}<br>
+     ${(100 * nul / tot.length).toFixed(1)} % des simulations finissent à 0 €.
+     <br><br><b>Lecture :</b> tant que la bande P5–P95 est large, aucune conclusion n'est possible.
+     Il faut plusieurs centaines de grilles pour que le taux de retour se stabilise.`;
+}
+
+/* --- Dessin canvas --- */
+function dessiner(cv, serie, bandes, zeroLine, unit) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const x = cv.getContext('2d'); x.scale(dpr, dpr); x.clearRect(0, 0, w, h);
+  if (!serie.length) return;
+  const all = serie.concat(bandes[0] || [], bandes[1] || [], bandes[2] || [], zeroLine ? [0] : []);
+  let mn = Math.min(...all), mx = Math.max(...all); if (mn === mx) { mn -= 1; mx += 1; }
+  const pad = (mx - mn) * .08; mn -= pad; mx += pad;
+  const px = i => 34 + i * (w - 44) / Math.max(1, serie.length - 1);
+  const py = v => h - 18 - (v - mn) / (mx - mn) * (h - 30);
+
+  if ((bandes[0] || []).length) {
+    x.fillStyle = 'rgba(77,163,255,.16)'; x.beginPath();
+    bandes[1].forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
+    for (let i = bandes[0].length - 1; i >= 0; i--) x.lineTo(px(i), py(bandes[0][i]));
+    x.closePath(); x.fill();
+  }
+  if ((bandes[2] || []).length) {
+    x.strokeStyle = '#ffb454'; x.setLineDash([4, 4]); x.lineWidth = 1.4; x.beginPath();
+    bandes[2].forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
+    x.stroke(); x.setLineDash([]);
+  }
+  if (zeroLine) { x.strokeStyle = '#43506a'; x.lineWidth = 1; x.beginPath(); x.moveTo(34, py(0)); x.lineTo(w - 10, py(0)); x.stroke(); }
+  x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath();
+  serie.forEach((v, i) => i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v))); x.stroke();
+  x.fillStyle = '#fff'; serie.forEach((v, i) => { x.beginPath(); x.arc(px(i), py(v), 2.6, 0, 7); x.fill(); });
+  x.fillStyle = '#8b9bb4'; x.font = '10px system-ui';
+  x.fillText(mx.toFixed(0) + (unit || ''), 3, 12); x.fillText(mn.toFixed(0) + (unit || ''), 3, h - 6);
+}
+
+bDate.value = new Date().toISOString().slice(0, 10);
+</script>
+</body>
+</html>
