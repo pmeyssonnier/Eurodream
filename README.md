@@ -177,3 +177,43 @@ Corrections apportées par rapport à la v2 :
 | « l'écart aux 52 % vient de la réserve non redistribuée » | écart **mesuré** à −7,7 points, explication retirée |
 | Levier anti-partage présenté comme « le seul levier réel » | **plafonné et chiffré** : quelques dixièmes de point (mesuré +0,44 pt sur Joker+) |
 | — | onglet **Données réelles**, note sur le décalage J+1 des dates de débit, P(récupérer sa mise) exacte |
+
+## v4 — l'onglet Cagnotte Joker+
+
+`eurodreams_v4.html` ajoute un quatrième onglet consacré au seul levier de tout
+l'audit qui dépasse le dixième de point.
+
+**TRJ = 46,80 % + 5,92 points par million d'euros de cagnotte.**
+
+Le rang 1 du Joker+ s'accumule (contrairement à EuroDreams, sans report) et les
+rangs 2 à 8 sont à montants fixes : tout le TRJ variable tient dans cette cagnotte.
+
+| Tranche | Part des tirages | TRJ moyen |
+|---|---|---|
+| 0,0–0,4 M€ | 17,3 % | 48,31 % |
+| 0,4–0,8 M€ | 28,5 % | 49,98 % |
+| 0,8–1,2 M€ | 21,6 % | 52,40 % |
+| 1,2–1,6 M€ | 11,7 % | 54,83 % |
+| 1,6–2,0 M€ | 7,0 % | 57,19 % |
+| 2,0–2,5 M€ | 7,1 % | 59,97 % |
+| 2,5–3,2 M€ | 6,7 % | 63,54 % |
+
+Distribution mesurée sur les **1 178 tirages** où la cagnotte en cours est publiée
+(2011-02-02 → 2016-01-24). Médiane 800 000 €, moyenne 1 031 515 €.
+
+**Deux régimes.** 2011 → début 2016 : palier de +75 000 €/semaine, sommet
+3 125 000 €. Depuis 2016 la cagnotte en cours n'est plus publiée ; les 38 jackpots
+touchés sont tous multiples de 200 000 € et plafonnés à 2 500 000 €, ce qui ramène
+le TRJ maximal atteignable de 65,3 % à **61,6 %**.
+
+**La borne dure ne bouge pas** : espérance nulle à 8 989 301 €, soit 2,9× le record
+historique et 3,6× le plafond actuel. Aucune fenêtre à espérance positive n'existe.
+
+Le curseur de cagnotte de l'onglet Bankroll pilote le modèle : la loi de gain du
+Joker+ est reconstruite à partir des paramètres mesurés (6 chiffres alignés par
+l'une des deux extrémités + signe du zodiaque cumulatif) au lieu de constantes
+figées, et l'espérance du portefeuille se recalcule.
+
+Graphiques : palette de marques **validée** (`#3987e5` / `#d95926`, bande de clarté
+OKLCH dark, ΔE CVD 26,8, contraste ≥ 3:1), survol avec réticule et infobulle,
+légende, étiquettes directes sélectives, vue tableau.
