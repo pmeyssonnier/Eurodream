@@ -290,3 +290,69 @@ garantit.
 - TRJ hors rangs 1-2 **constant à 28,4 % sur les quatre années** (28,36 / 28,34 /
   28,56 / 28,46). TRJ total 39,79 %, gonflé par les 2 jackpots de 2025.
 - 100 % des lots sont arrondis au dixième d'euro.
+
+## Audit de la feuille officielle `statistiques-jokerplus-0826.xlsx`
+
+`scripts/15_audit_feuille_statistiques.py` — 4 onglets : Palmarès des signes,
+TOP 10 des mises, TOP 10 des gains, Résultats (5 050 tirages, 2011-02-02 →
+2026-08-31).
+
+### Contrôle croisé : concordance parfaite
+
+| Contrôle | Résultat |
+|---|---|
+| Numéros identiques (feuille ↔ mes CSV) | **5 050 / 5 050** (100,0000 %) |
+| Signes identiques | **5 050 / 5 050** |
+| TOP 10 des mises | 10/10 au centime |
+| TOP 10 des gains | 10/10 |
+| Somme des apparitions = nombre de tirages | 5 050 = 5 050 |
+| Zéros de tête conservés | 461 numéros (9,13 %) |
+
+Les 7 tirages de septembre 2026 présents dans mes CSV sont absents : la feuille
+s'arrête à août.
+
+### Le « Palmarès » ne dit rien
+
+```
+χ² d'uniformité = 14,79 (11 ddl) → p = 0,1924
+Écart max |z| = 1,93 (Verseau) ; max attendu par pur hasard = 1,94 en moyenne
+P(max|z| ≥ 1,93) = 0,489
+Écart le plus sorti − le moins sorti : 71 (Balance 454, Verseau 383)
+   médiane attendue par pur hasard : 66  →  64ᵉ percentile
+```
+
+**Le palmarès officiel est exactement aussi dispersé qu'un palmarès tiré au sort.**
+
+La colonne « plus sorti depuis (# tirages) » suit une loi géométrique(1/12)
+(Kolmogorov-Smirnov p = 0,927) : l'attente est sans mémoire, un signe « en retard »
+n'a aucune probabilité accrue de sortir.
+
+### Tests d'indépendance que la feuille ne fait pas
+
+| Test | Résultat |
+|---|---|
+| Table de transition 12×12 (signe t → t+1) | χ² = 103,4 (121 ddl), p = 0,874 |
+| Même signe deux fois de suite | 9,01 % vs 8,33 % attendu, p = 0,083 |
+| Chiffres, toutes positions (30 300 tirés) | χ² = 5,67 (9 ddl), p = 0,773 |
+| Chiffres par position | p = 0,27 / 0,95 / 0,46 / 0,14 / 0,53 / 0,995 |
+| Numéros complets répétés | 13 paires observées, 12,7 attendues |
+| Autocorrélation du numéro (lag 1) | ρ = −0,004 |
+
+### Puissance : ce que 5 050 tirages permettent
+
+```
+un signe 1,05× plus fréquent → détecté dans  7,1 % des cas
+             1,10×           →               20,3 %
+             1,15×           →               42,0 %
+             1,20×           →               71,5 %
+```
+
+Quatre fois plus puissant que le test sur les 297 tirages EuroDreams (5,5 % contre
+un biais de 1,10), mais un biais modéré resterait invisible.
+
+### Les joueurs ne suivent pas le palmarès
+
+Corrélation entre la fréquence publiée et la popularité mesurée auprès des joueurs
+(via le rang 8) : **Spearman ρ = +0,249, p = 0,436**. Capricorne est le 2ᵉ signe le
+plus sorti et le **moins joué** (indice 0,916) ; Lion est le plus joué (1,110) et
+seulement 3ᵉ au palmarès. La préférence des joueurs a une autre origine.
