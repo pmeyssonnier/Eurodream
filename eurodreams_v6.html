@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EuroDreams v3 — Générateur, Bankroll & Données réelles</title>
+<title>EuroDreams v6 — modèle exact, audit correctif</title>
 <style>
 :root{--bg:#11151c;--card:#1a212c;--line:#2b3648;--txt:#e6edf5;--mut:#8b9bb4;--acc:#4da3ff;--ok:#3ddc97;--bad:#ff6b6b;--warn:#ffb454;--surf:#0d1117;--grid:#1e2635;--s1:#3987e5;--s2:#d95926}
 *{box-sizing:border-box}
@@ -164,6 +164,7 @@ sur les statistiques.
   <div><label>Gain encaissé (€)</label><input type="number" id="bGain" step="0.10" value="0"></div>
 </div>
 <div class="meta" id="bMiseCalc"></div>
+<div class="meta" id="bMsg"></div>
 <button id="bAdd">Ajouter</button>
 <div class="row">
   <button id="bDemo" class="sec">Charger les 61 tirages</button>
@@ -525,7 +526,7 @@ function setJackpot(J) {
     const v = PRIX[l] + PRIX[t];
     add(pr / 12, v + SIG); add(pr * 11 / 12, v);      /* le signe s'ajoute */
   }
-  add(1e-6 / 12, J); add(1e-6 * 11 / 12, JK_LOTS[2]);
+  add(P_R1_JK, J); add(P_R2_JK, JK_LOTS[2]);   /* une seule source de vérité */
   const e = [...m.entries()].sort((a, b) => a[0] - b[0]);
   JK_V = e.map(x => x[0]); JK_P = e.map(x => x[1]);
 }
@@ -723,15 +724,21 @@ document.getElementById('copy').onclick = () => {
 
 /* ==================== BANKROLL ==================== */
 const LS = 'eurodreams_bankroll_v3', LSR = 'eurodreams_rangs_v3';
-let BANK = JSON.parse(localStorage.getItem(LS) || 'null');
+/* En navigation privée ou avec les données de site bloquées, localStorage lève
+   à la lecture comme à l'écriture. L'application doit rester utilisable, avec
+   un historique simplement non persistant. */
+let STORE_OK = true;
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { STORE_OK = false; return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { STORE_OK = false; } };
+let BANK = JSON.parse(lsGet(LS) || 'null');
 if (!BANK) {   /* migration depuis la v2 : {d,m,g} -> {d,k,j,g} */
-  const old = JSON.parse(localStorage.getItem('eurodreams_bankroll_v1') || '[]');
+  const old = JSON.parse(lsGet('eurodreams_bankroll_v1') || '[]');
   BANK = old.map(x => {
     const j = (Math.abs((x.m / 2.5) % 1) > 1e-9) ? 1 : 0;
     return { d: x.d, k: Math.max(0, Math.round((x.m - j * JK_MISE) / 2.5)), j, g: x.g };
   });
 }
-let RANGS = JSON.parse(localStorage.getItem(LSR) || 'null');
+let RANGS = JSON.parse(lsGet(LSR) || 'null');
 function tableCourante() {
   const t = TABLES[pTable.value] || TABLES.rec;
   const r1 = pRente.value === 'act' ? RENTE_ACT : RENTE_NOM;
@@ -739,7 +746,7 @@ function tableCourante() {
 }
 if (!RANGS) RANGS = tableCourante();
 
-const save = () => { localStorage.setItem(LS, JSON.stringify(BANK)); localStorage.setItem(LSR, JSON.stringify(RANGS)); };
+const save = () => { lsSet(LS, JSON.stringify(BANK)); lsSet(LSR, JSON.stringify(RANGS)); };
 /* toISOString() renvoie la date UTC : en Belgique, entre minuit et 1 h ou 2 h,
    cela enregistrait la VEILLE. On formate en heure locale. */
 /* division sûre : un historique d'une seule ligne, ou une mise nulle, donnait
@@ -769,8 +776,18 @@ function majMise() {
 
 document.getElementById('bAdd').onclick = () => {
   const d = bDate.value || dateLocale();
-  BANK.push({ d, k: +bK.value || 0, j: +bJ.value, g: +bGain.value || 0 });
+  const k = Math.max(0, +bK.value || 0), j = +bJ.value ? 1 : 0, g = +bGain.value || 0;
+  const msg = document.getElementById('bMsg');
+  const dit = t => { msg.innerHTML = t; setTimeout(() => { msg.innerHTML = ''; }, 6000); };
+  if (!k && !j) return dit('<span class="neg">Rien à enregistrer : 0 grille et pas de Joker+.</span>');
+  if (g < 0) return dit('<span class="neg">Un gain encaissé ne peut pas être négatif.</span>');
+  if (g > 0 && g < 2.5) return dit('<span class="neg">Le plus petit gain possible est 1,50 € (Joker+, signe seul) ou 2,50 € (EuroDreams, rang 6).</span>');
+  const dup = BANK.filter(x => x.d === d).length;
+  BANK.push({ d, k, j, g });
   BANK.sort((a, b) => a.d < b.d ? -1 : 1); save(); renderBank();
+  dit(dup ? `<span class="mut">Ajouté. Attention : ${dup + 1} lignes portent la date ${d}.</span>`
+          : `<span class="pos">Ajouté.</span>`
+      + (STORE_OK ? '' : ' <span class="neg">Stockage local indisponible : l\'historique sera perdu au rechargement.</span>'));
 };
 document.getElementById('bDemo').onclick = () => {
   BANK = [['2025-09-05',7],['2025-09-09',0],['2025-09-12',2],['2025-09-16',2.5],['2025-09-19',4],
@@ -936,7 +953,7 @@ function renderBank() {
   tb.innerHTML = '<tr><th>Date</th><th>Mise</th><th>Gain</th><th>Net</th><th>Solde</th><th></th></tr>' +
     BANK.map((x, i) => {
       const m = miseDe(x), n = x.g - m;
-      return `<tr><td>${x.d}<span class="mut"> ${x.k}g${x.j ? '+J' : ''}</span></td>
+      return `<tr><td>${x.d}<span class="mut"> ${x.k}g${x.j ? '+J' : ''}</span>${enBoost(x.d) ? '<span class="tag" style="background:#14231c;color:#c9ffe2">Boost</span>' : ''}</td>
         <td>${m.toFixed(2)}</td><td>${x.g.toFixed(2)}</td>
         <td class="${cls(n)}">${n >= 0 ? '+' : ''}${n.toFixed(2)}</td>
         <td class="${cls(soldes[i])}">${soldes[i].toFixed(2)}</td>

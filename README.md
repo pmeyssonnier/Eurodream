@@ -1,56 +1,138 @@
-# Audit contradictoire — EuroDreams (Loterie Nationale, Belgique)
+# EuroDreams + Joker+ — audit statistique contradictoire
 
-Re-calcul indépendant d'une analyse statistique portant sur 61 tirages joués
-avec 4 grilles fixes + Joker+ (mise 11,50 €/tirage).
+Recalcul indépendant, à partir des données officielles de la Loterie Nationale, de
+ce que rapportent réellement EuroDreams et le Joker+. Le projet a commencé comme
+l'audit d'une analyse portant sur 61 tirages joués à 11,50 €, et s'est transformé en
+reconstruction complète des deux jeux à partir de leurs règles.
 
-## Principe méthodologique
+**Toutes les probabilités de jeu sont exactes.** Les 3 838 380 combinaisons de C(40,6)
+sont énumérées, la loi du gain Joker+ est dérivée du couple (chiffres alignés à gauche,
+à droite). La simulation ne sert qu'aux lois nulles, aux puissances de test et aux
+enveloppes de trajectoire.
 
-Toutes les probabilités de jeu sont **exactes** : le script énumère les
-3 838 380 combinaisons de C(40,6) et calcule les lois par comptage, pas par
-Monte-Carlo. Seuls les intervalles de confiance et la loi nulle du χ² utilisent
-de la simulation.
+---
 
-## Scripts
+## Résultats principaux
 
-| Fichier | Objet |
+| Question | Réponse mesurée |
 |---|---|
-| `scripts/00_audit_complet_colab.py` | Script unique, copiable dans Google Colab |
-| `scripts/01_probabilites_et_esperance.py` | Combinatoire des rangs, espérance nominale vs actualisée |
-| `scripts/02_bilan_et_incertitude.py` | Bilan des 61 tirages, fenêtres, IC 95 %, tests de dérive |
-| `scripts/03_couverture_grilles_exact.py` | Énumération exhaustive : couverture, P(≥1 gain), P(rentrer dans sa mise) |
-| `scripts/04_chi2_loi_nulle_correcte.py` | Calibration du χ² pour un tirage sans remise + puissance |
-| `scripts/05_joker_leviers_strategie.py` | Identification EuroDreams/Joker+, leviers, budget |
-| `scripts/06_synthese_contradictoire.py` | Robustesse du « point 9 », choix de l'étalon |
+| TRJ d'EuroDreams, tirage ordinaire | **44,50 %** nominal · **39,35 %** rente actualisée à 3 % |
+| TRJ d'EuroDreams, tirage **Boost** | **52,00 %** — exactement le chiffre annoncé |
+| Où passent les 7,5 points d'écart | Fonds de Réserve : il met de côté **7,5024 %** par tirage ordinaire, un Boost coûte **7,5032 %** |
+| TRJ du Joker+ | **52,39 %** versés sur 963 M€, dont **46,80 %** hors jackpot |
+| Loi du Joker+ dérivée des règles | **46,7555 %** hors jackpot — 0,045 point de l'observé, sans un seul paramètre libre |
+| Seuil d'espérance nulle du Joker+ | cagnotte de **9 584 002 €**, soit 3,8× le plafond actuel |
+| Les joueurs choisissent-ils leurs numéros ? | EuroDreams **oui** : Var(z) = 54,22 au rang 6 contre 1 attendu. Joker+ **non** : les 6 chiffres sont attribués, seul le signe est choisi |
+| Que vaut « éviter les combinaisons populaires » ? | Joker+, seul cas entièrement modélisable : **+0,005 point** de TRJ. EuroDreams : **non mesuré**, il manque les numéros tirés |
+| Le palmarès officiel des signes dit-il quelque chose ? | Non : χ² = 14,79 (p = 0,19), écart max au 63ᵉ percentile du pur hasard |
+
+**Le seul levier qui dépasse le dixième de point** est de jouer le Joker+ quand la
+cagnotte est haute : +5,5556 points de TRJ par million d'euros de cagnotte, soit
+jusqu'à +13,9 points au plafond actuel. Il reste très insuffisant pour rendre
+l'espérance positive.
+
+---
+
+## Application
+
+`eurodreams_v6.html` — un fichier, aucune dépendance, aucun réseau. Cinq onglets :
+générateur de grilles, bankroll, données officielles, cagnotte Joker+, popularité.
+Ouvrir le fichier dans un navigateur suffit.
+
+Les versions antérieures sont conservées telles quelles comme références historiques :
+`eurodreams_v3.html`, `eurodreams_v4.html`, `eurodreams_v5.html`.
+
+---
+
+## Tests
 
 ```bash
 pip install numpy scipy pandas
-python scripts/00_audit_complet_colab.py
+python tests/run_all.py           # 41 tests, ~20 s
 ```
 
-## Écarts principaux relevés par rapport à l'analyse auditée
+41 tests répartis en cinq modules, sans dépendance à pytest :
 
-1. **χ² mal calibré** : p = 0,22 et non 0,44 (les comptages issus d'un tirage
-   sans remise sont négativement corrélés ; E[χ²] = 40(1−p) = 34, pas 39).
-   Conclusion inchangée, chiffre faux. Puissance du test ≈ nulle.
-2. **TRJ modèle** : 43,2 % avec la table de gains observée (44,1 % seulement si
-   le rang 4 vaut 30 €). Actualisé à 3 %, la rente ramène le TRJ à 38,0 %.
-   L'écart avec les 52 % annoncés n'est pas expliqué par la table supposée.
-3. **IC 95 % du TRJ sur n = 61 : [22,4 % ; 47,0 %]**, soit 24,6 points de large.
-   26,6 % et 43,2 % y sont tous deux. La « convergence vers 26,6 % » n'est pas
-   soutenable ; il faudrait ~1 530 tirages pour un IC de 5 points.
-4. **La décroissance du TRJ avec la fenêtre est un artefact de récence** :
-   sur les fenêtres initiales, le TRJ *croît* (27,2 % → 33,1 %).
-5. **P(rentrer dans sa mise) est robuste aux rangs 3 et 4** mais s'inverse dès
-   que le rang 5 atteint 7,50 € : le phénomène tient au ratio rang 5 / rang 6.
-6. **P(≥ 4 bons numéros) est exactement 4 × P(1 grille)** — démonstration :
-   deux grilles ayant ≤ 1 numéro commun ne peuvent pas avoir 4 bons chacune
-   (il faudrait ≥ 7 numéros tirés).
-7. **Étalon correct hors jackpot = 28,2 %**. Le joueur est au 92ᵉ percentile,
-   donc au-dessus de la médiane du modèle, pas en dessous.
-8. **21 gains sur 61 sont impossibles en EuroDreams seul** → le TRJ de 33,1 %
-   est un TRJ de portefeuille. Part EuroDreams bornée à [0 % ; 32,0 %].
-9. **Pas de rollover en EuroDreams** : aucune fenêtre à espérance positive
-   n'existe jamais (il faudrait une rente de valeur actuelle 34,5 M€).
+| Module | Ce qu'il garantit |
+|---|---|
+| `tests/test_probabilites.py` | Combinatoire exacte d'EuroDreams : effectifs hypergéométriques, somme des lois à 1, énumération exhaustive, P(≥1 gain) par nombre de grilles |
+| `tests/test_joker_pmf.py` | La loi du Joker+ somme à 1, reproduit les 0,18 lot de rang 7 par grille **et** le « 1 sur 3,88 » officiel, donne le bon TRJ et le bon seuil |
+| `tests/test_donnees.py` | Intégrité des CSV officiels, lots fixes, part de 28,44 % aux rangs 3-6, identité du Fonds de Réserve et du Boost, sur-dispersion |
+| `tests/test_application.py` | **Les constantes du HTML correspondent aux calculs Python** — et `setJackpot()` est réellement exécuté dans node puis comparé à la loi exacte |
+| `tests/test_navigateur.py` | Les cinq onglets se rendent sans erreur JavaScript ; le générateur plafonne les grilles disjointes ; la bankroll compte les tirages Boost (ignoré si Playwright est absent) |
+
+La suite a été validée par mutation : fausser `P_R1_JK`, `PMISE_AVEC`, le plafond de
+grilles disjointes ou un lot dans un CSV fait échouer les tests concernés. C'est le
+module `test_application.py` qui a trouvé que le `<title>` de l'application était
+resté en « v3 » pendant trois versions.
+
+---
+
+## Scripts
+
+Ordre de lecture recommandé : 11 → 19. Les scripts 00 à 10 datent des premières
+passes ; ceux marqués LEGACY portent un bandeau en tête de fichier.
+
+| Fichier | Objet | État |
+|---|---|---|
+| `00_audit_complet_colab.py` | Script unique pour Colab, première passe | **LEGACY** — table de gains supposée |
+| `01_probabilites_et_esperance.py` | Combinatoire des rangs, espérance nominale vs actualisée | valide |
+| `02_bilan_et_incertitude.py` | Bilan des 61 tirages, fenêtres, dérive | valide, mais l'IC bootstrap est remplacé par le script 19 |
+| `03_couverture_grilles_exact.py` | Énumération exhaustive : couverture, P(≥1 gain), P(rentrer dans sa mise) | valide |
+| `04_chi2_loi_nulle_correcte.py` | Calibration du χ² sans remise + puissance | valide, puissance recalibrée en v6 |
+| `05_joker_leviers_strategie.py` | Identification EuroDreams/Joker+, leviers, budget | valide, valorisation du levier remplacée par le 18 |
+| `06_synthese_contradictoire.py` | Robustesse du « point 9 », choix de l'étalon | valide |
+| `07_jokerplus_trj_reel.py` | TRJ Joker+ mesuré sur 2011-2026 | valide |
+| `08_portefeuille_exact_avec_joker.py` | Loi exacte du portefeuille par convolution | valide, PMF remplacée par le 19 |
+| `09_jokerplus_tirages_exploitabilite.py` | Uniformité du générateur Joker+ | **LEGACY** — la partie « signature humaine » est réfutée |
+| `10_popularite_mesuree.py` | Popularité mesurée des signes et des chiffres | **LEGACY** — les chiffres ne sont pas choisis ; levier faux |
+| `11_eurodreams_donnees_reelles.py` | 297 tirages officiels, table de gains réelle | valide |
+| `12_identification_du_releve.py` | Le relevé du joueur correspond-il à EuroDreams ? | valide |
+| `13_reconciliation_finale.py` | Réconciliation ligne à ligne des 61 tirages | valide |
+| `14_analyse_financiere_eurodreams.py` | Parimutuel, sur-dispersion, changement d'octobre 2025 | valide |
+| `15_audit_feuille_statistiques.py` | Audit du classeur officiel Joker+ | valide |
+| `16_donnees_v5_popularite.py` | Données de l'onglet Popularité v5 | superseded par le 18 |
+| `17_contre_audit_reglement.py` | Trois objections externes, testées contre les données | valide |
+| `18_v6_modele_exact.py` | PMF Joker+ dérivée des règles, modèle de co-gagnants | valide |
+| `19_v6_boost_et_pmf_exacte.py` | Fonds de Réserve, Boost, loi exacte (L, T), test des 61 tirages | valide |
+
+```bash
+pip install numpy scipy pandas openpyxl
+python scripts/19_v6_boost_et_pmf_exacte.py
+```
+
+---
+
+## Données
+
+`data/` contient les fichiers publiés par la Loterie Nationale :
+16 fichiers financiers Joker+ (2011-2026, 5 057 tirages, 963 M€ de mises),
+16 fichiers de tirages Joker+ (numéros + signe), 4 fichiers financiers EuroDreams
+(2023-2026, 297 tirages, 140,7 M€), et le classeur officiel de statistiques Joker+.
+
+**Manquant** — les 297 combinaisons tirées d'EuroDreams (`eurodreams-gamedata-FR-*.csv`).
+Sans elles, impossible de relier les caractéristiques d'une grille à son nombre attendu
+de co-gagnants : le score d'impopularité du générateur reste une heuristique non
+calibrée, et l'application le dit.
+
+---
+
+## Ce que le projet ne prétend pas
+
+- Aucune combinaison n'a plus de chances de sortir qu'une autre. Les tests de RNG
+  passent tous, et la puissance disponible est faible (6 % contre un biais de 10 %
+  sur 297 tirages) : « aucun biais détecté » ne veut pas dire « tirage prouvé équitable ».
+- Le générateur n'améliore pas votre probabilité de gagner. Il ne peut agir que sur le
+  **partage** des lots parimutuels, dont l'ampleur reste à démontrer sur EuroDreams.
+- Aucune stratégie identifiée ne rend l'espérance positive, à aucune cagnotte atteignable.
+
+---
+
+## Journal des corrections
+
+Cette section conserve, dans l'ordre chronologique, chaque correction apportée à
+l'analyse — y compris les erreurs que j'ai commises et qui ont été relevées. Elle sert
+de trace de révision.
 
 ## Complément — le TRJ réel du Joker+ (données officielles 2011-2026)
 
@@ -599,3 +681,4 @@ ni les gains réels ni l'analyse hors jackpot.
 ### Scripts marqués LEGACY
 `00_audit_complet_colab.py` (table de gains supposée), `09` et `10` (lecture des chiffres
 Joker+ comme signature humaine, et valorisation du levier). Bandeau en tête de fichier.
+
