@@ -41,15 +41,35 @@ print(f"  seuil de rejet a 5 % : correct = {np.quantile(stat,.95):.2f} | naif = 
 
 # --- 3. Puissance : que faudrait-il pour detecter un biais ? -----------
 print("\n--- Puissance du test sur 297 tirages ---")
-for biais in (1.05, 1.10, 1.20, 1.50):
-    w = np.ones(N); w[0] = biais; w /= w.sum()
+print("  Correction v6 : le poids w passe a l'echantillonnage sans remise ne donne")
+print("  PAS un ratio de frequence egal a w. Le script tabulait donc la puissance")
+print("  contre une alternative qui n'etait pas celle annoncee. On CALIBRE : pour")
+print("  chaque ratio cible, on cherche le poids qui produit ce ratio, mesure sur")
+print("  200 000 tirages simules.")
+seuil = np.quantile(stat, .95)
+def tire(w, m):
+    """m tirages de K numeros sans remise, poids w (course exponentielle)."""
+    return np.argpartition(rng.exponential(size=(m, N)) / w, K, axis=1)[:, :K]
+def ratio_realise(poids, m=200000):
+    w = np.ones(N); w[0] = poids; w /= w.sum()
+    f = np.bincount(tire(w, m).ravel(), minlength=N)[0] / m
+    return f / (K / N)
+def calibre(cible):
+    lo, hi = 1.0, 4.0
+    for _ in range(18):
+        mid = (lo + hi) / 2
+        if ratio_realise(mid) < cible: lo = mid
+        else: hi = mid
+    return (lo + hi) / 2
+for cible in (1.05, 1.10, 1.20, 1.50):
+    poids = calibre(cible)
+    w = np.ones(N); w[0] = poids; w /= w.sum()
     hit = 0
-    seuil = np.quantile(stat, .95)
     for b in range(4000):
-        idx = np.argpartition(rng.random((T, N))/w, K, axis=1)[:, :K]
-        cnt = np.bincount(idx.ravel(), minlength=N)
-        hit += (((cnt-E)**2/E).sum() >= seuil)
-    print(f"  un numero {biais:.2f}x plus frequent -> puissance = {hit/4000:.1%}")
+        cnt = np.bincount(tire(w, T).ravel(), minlength=N)
+        hit += (((cnt - E) ** 2 / E).sum() >= seuil)
+    print(f"  numero {cible:.2f}x plus frequent (poids calibre {poids:.3f}, "
+          f"ratio verifie {ratio_realise(poids):.3f}) -> puissance = {hit/4000:.1%}")
 print("  -> sur 297 tirages le test ne detecte qu'un biais ENORME.")
 print("     'p = 0,44 donc pas de signal' est un abus : c'est 'pas de signal DETECTABLE'.")
 

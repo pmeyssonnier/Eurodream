@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+# ============================================================================
+#  LEGACY — CHIFFRES REMPLACES.
+#  La popularite des SIGNES reste valide (ils sont choisis). Celle des CHIFFRES ne
+#  l'est pas : ils sont attribues automatiquement. Et la valorisation du levier
+#  (+0,436 / +0,572 point) est fausse : elle divisait la cagnotte par le nombre
+#  ATTENDU de gagnants alors que lambda vaut 0,011. Vrai modele de co-gagnants
+#  dans scripts/18_v6_modele_exact.py : +0,0050 point.
+# ============================================================================
 """
 Joker+ - AUDIT 10 : MESURE DIRECTE de la popularite des numeros joues.
 La sur-dispersion des comptages de gagnants permet de reconstituer la

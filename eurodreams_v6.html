@@ -86,9 +86,13 @@ code{background:#0d1117;padding:1px 4px;border-radius:4px;font-size:12px}
 
 <div class="card warn">
 <b>Ce que fait cet outil — et ce qu'il ne fait pas.</b>
-Il ne prédit rien : les 19 191 900 combinaisons sont équiprobables.
-Il ne modifie pas votre espérance de gain : elle vaut <b>44,3 %</b> de la mise (nominal)
-ou <b>39,2 %</b> actualisée à 3 %, quelle que soit la grille cochée.
+Il ne prédit rien : les 19 191 900 combinaisons ont exactement la même
+<b>probabilité de sortir</b>. Votre espérance, elle, n'est pas rigoureusement identique
+d'une grille à l'autre : les rangs 3, 4 et 5 sont <b>parimutuels</b>, donc leur lot dépend
+du nombre de co-gagnants, et donc de la popularité de la combinaison. L'effet est réel
+mais petit — voir l'onglet Popularité pour ce qui est mesuré et ce qui ne l'est pas.
+Ordre de grandeur : <b>44,50 %</b> de la mise en nominal, <b>39,35 %</b> actualisée à 3 %,
+à quelques dixièmes de point près selon la grille.
 <h3>Le levier « anti-partage » : ce qui est prouvé, et ce qui ne l'est pas</h3>
 <b>Prouvé :</b> les joueurs d'EuroDreams ne cochent pas au hasard. Le nombre de gagnants
 au rang 6 fluctue <b>54 fois</b> plus que si les grilles étaient tirées au sort (Var(z) = 54,22
@@ -180,8 +184,9 @@ les règles réelles du jeu (EuroDreams + Joker+). Pointillé orange = espéranc
 <h2>Taux de retour cumulé</h2>
 <canvas id="cTrj"></canvas>
 <div class="meta">Convergence de <code>gains / mises</code>. Pointillé = TRJ théorique du
-portefeuille. Les 50 premiers points ne veulent rien dire : l'IC à 95 % sur 61 tirages
-fait <b>24,6 points</b> de large.</div>
+portefeuille. Les 50 premiers points ne veulent rien dire : en simulant 61 tirages
+<b>sous le modèle</b>, le TRJ final a une médiane de <b>28,6 %</b> et un intervalle à
+90 % de <b>[23,0 % ; 38,6 %]</b>.</div>
 </div>
 
 <div class="card">
@@ -263,24 +268,35 @@ Le phénomène tient au rapport rang 5 / mise unitaire, pas aux rangs 3 et 4.</d
 Voir ci-dessous d'où il vient : il est structurel, pas inexpliqué.</div>
 </div>
 
-<div class="card fix"><h2 style="color:var(--ok)">Où passent les 7,5 points manquants</h2>
-<b>Corrigé.</b> Je présentais l'écart entre les 52 % annoncés et les 44,45 %
-calculés comme un écart brut. Il a en réalité une explication réglementaire, et elle
-se vérifie sur mes propres chiffres.
-<br><br>Le règlement prévoit que <b>45,21 % de l'« argent des lots »</b> — lui-même égal à
-52 % des mises — part au <b>Fonds de Réserve</b>, commun aux loteries participantes,
-qui finance les rangs 1 et 2 ainsi que les tirages et promotions exceptionnels.
-Le reste va directement aux rangs 3 à 6 :
-<br><br><b style="color:var(--txt)">52 % × (1 − 45,21 %) = 28,49 %</b>
-<br>et je mesure <b style="color:var(--txt)">28,44 %</b> sur les 297 tirages.
-<b>Concordance à 5 centièmes de point.</b>
-<br><br>Le Fonds reçoit donc 52 % × 45,21 % = <b>23,51 %</b> de la mise, alors que
-l'espérance des rangs 1 et 2 n'en consomme que <b>16,01 %</b> (rente nominale
-7,2 M€). Différence : <b>7,50 %</b> — exactement les 7,5 points que je constatais.
-Ils ne s'évaporent pas, ils partent en promotions, tirages exceptionnels et provision.
-<br><br><b>Conclusion inchangée pour le joueur :</b> son TRJ sur un tirage ordinaire
-reste <b>44,45 %</b> nominal et <b>39,35 %</b> une fois la rente actualisée. Les 52 %
-sont exacts au niveau de la famille de jeux, faux au niveau d'un tirage.
+<div class="card fix"><h2 style="color:var(--ok)">Les 52 % : le mystère est clos</h2>
+<b>Résolu en v6.</b> Je présentais l'écart entre 52 % annoncés et 44,50 % calculés comme
+un écart brut, puis comme partant « en promotions et provision ». Le mécanisme est en
+réalité identifiable au dix-millième de point.
+<br><br>Le règlement affecte <b>45,21 % de l'« argent des lots »</b> — lui-même 52 % des
+mises — au <b>Fonds de Réserve</b>. Il reste donc pour les rangs 3 à 6 :
+<br><br><b style="color:var(--txt)">52 % × (1 − 45,21 %) = 28,4908 %</b>
+<br>et je mesure <b style="color:var(--txt)">28,4623 %</b> sur 297 tirages.
+<h3 style="color:var(--ok)">Et voici à quoi sert la réserve</h3>
+<table><tr><th></th><th>part de la mise</th></tr>
+<tr><td>Le Fonds reçoit 52 % × 45,21 %</td><td><b>23,5092 %</b></td></tr>
+<tr><td>Les rangs 1-2 en consomment (rente 7,2 M€)</td><td>16,0068 %</td></tr>
+<tr><td><b>Solde disponible</b></td><td><b class="pos">+7,5024 %</b></td></tr>
+<tr><td>Coût d'un <b>Boost</b> (rente portée à 10,8 M€)</td><td><b class="pos">+7,5032 %</b></td></tr>
+<tr><td><b>Écart</b></td><td><b>0,0008 point</b></td></tr></table>
+<br>Autrement dit : <b>le Fonds de Réserve met de côté, sur chaque tirage ordinaire,
+exactement ce qu'il faut pour financer un tirage Boost.</b> Et en régime Boost, le TRJ
+nominal vaut :
+<br><br><b style="color:var(--txt)">28,4908 % + 1,0004 % + 22,5095 % = 52,0007 %</b>
+<br><br>Les 52 % annoncés ne sont donc ni un arrondi ni une moyenne floue : c'est le TRJ
+exact d'un tirage boosté. Sur un tirage ordinaire le joueur touche <b>44,50 %</b> nominal
+et <b>39,35 %</b> une fois la rente actualisée.
+<h3 style="color:var(--ok)">Pourquoi le Boost est invisible dans les fichiers</h3>
+Le Boost du <b>2 octobre 2025 au 9 avril 2026</b> couvre 55 tirages belges de mon jeu de
+données. Aucun n'y laisse de trace : la colonne du lot de rang 1 vaut 0,00 € tant qu'il
+n'y a pas de gagnant <i>belge</i>, et les deux seuls jackpots belges de l'historique
+(01/05/2025 et 07/07/2025) sont <b>antérieurs</b> au Boost — celui-ci a été remporté au
+Portugal. Mon constat « aucune trace de Boost » était donc exact, mais je l'avais mal
+expliqué.
 </div>
 </div>
 
@@ -465,7 +481,7 @@ const NGAG_MED = [0, 0, 10, 385, 5366, 31371];
 const P1_EXACT = [0.214658, 0.402560, 0.564586, 0.701614, 0.814523, 0.904194];
 /* P(gain >= mise) sur un tirage, table du régime actuel — énumération + convolution */
 const PMISE_SANS = [0.214658, 0.031130, 0.007929, 0.008983, 0.011229, 0.013474];
-const PMISE_AVEC = [0.097460, 0.034799, 0.015052, 0.011807, 0.013237, 0.015446];
+const PMISE_AVEC = [0.102083, 0.037455, 0.016125, 0.012237, 0.013354, 0.015458];
 /* loi exacte du gain d'une grille Joker+ à 1,50 € (reconstituée sur 642 M grilles) */
 /* ---- loi exacte du gain d'une grille Joker+ (1,50 €), CONSTRUITE depuis les
    paramètres mesurés sur 642 M de grilles : 6 chiffres alignés par l'une des deux
@@ -489,20 +505,31 @@ const TRJ_JK_HJ_OBS = 0.46800988;
 const trjJk = J => TRJ_JK_HJ + P_R1_JK * J / 1.5;   /* 5,5556 pt par million d'euros */
 let JK_V = [], JK_P = [];
 function setJackpot(J) {
+  /* Loi EXACTE du gain d'une grille, par énumération du couple (L, T) :
+     L = chiffres alignés en partant de la gauche, T = en partant de la droite.
+     Le ticket touche prix(L) ET prix(T) — les deux lectures sont payées.
+     P(L=l, T=t) = 0,81 × 10^-(l+t)        si l+t <= 4   (deux positions bloquantes)
+                 = 0,9 × 10⁻⁵             si l+t = 5    (elles se confondent)
+                 = 10⁻⁶                   si l = t = 6  (numéro entier)
+     La v5 posait 0,18 comme « probabilité d'un gain de 2 € » : double comptage.
+     L'espérance était juste (linéarité), la LOI ne l'était pas — d'où une
+     probabilité de gagner de 26,67 % au lieu des 25,75 % officiels (1 sur 3,88). */
+  const PRIX = [0, 2, 5, 20, 200, 2000];
   const m = new Map(), add = (pr, v) => m.set(v, (m.get(v) || 0) + pr);
-  add(P_R1_JK, J);                       /* 6 chiffres + signe */
-  add(P_R2_JK, JK_LOTS[2]);              /* 6 chiffres sans le signe */
-  let pDig = 1e-6;
-  for (const [r, k] of [[3, 5], [4, 4], [5, 3], [6, 2], [7, 1]]) {
-    const pr = 2 * 0.9 * Math.pow(10, -k); pDig += pr;
-    add(pr / 12, JK_LOTS[r] + JK_LOTS[8]);        /* le signe s'ajoute */
-    add(pr * 11 / 12, JK_LOTS[r]);
+  const SIG = JK_LOTS[8];
+  for (let l = 0; l < 6; l++) for (let t = 0; t < 6; t++) {
+    const s = l + t; let pr;
+    if (s <= 4) pr = 0.81 * Math.pow(10, -s);
+    else if (s === 5) pr = 0.9e-5;
+    else continue;                                   /* impossible sans tout matcher */
+    const v = PRIX[l] + PRIX[t];
+    add(pr / 12, v + SIG); add(pr * 11 / 12, v);      /* le signe s'ajoute */
   }
-  const pRien = 1 - pDig;                /* aucun chiffre : le signe, ou rien */
-  add(pRien / 12, JK_LOTS[8]); add(pRien * 11 / 12, 0);
+  add(1e-6 / 12, J); add(1e-6 * 11 / 12, JK_LOTS[2]);
   const e = [...m.entries()].sort((a, b) => a[0] - b[0]);
   JK_V = e.map(x => x[0]); JK_P = e.map(x => x[1]);
 }
+const P_GAIN_JK = 0.2575;      /* 1 sur 3,883 — officiel : 1 sur 3,88 */
 setJackpot(800000);
 
 /* ===== CAGNOTTE JOKER+ — données officielles =====
@@ -634,14 +661,19 @@ function tirage() {
   return p.slice(0, 6).sort((a, b) => a - b);
 }
 function generer(n, sev, strat, dreamMode) {
+  /* 6 grilles disjointes occupent déjà 36 des 40 numéros : au-delà c'est
+     impossible. On plafonne explicitement au lieu de retourner silencieusement
+     moins de grilles que demandé. */
+  const nMax = strat === 'disj' ? Math.min(n, 6) : n;
   const seuil = SEUILS[sev], res = [], used = new Set(); let essais = 0;
-  while (res.length < n && essais < 400000) {
+  while (res.length < nMax && essais < 400000) {
     essais++; const c = tirage();
     if (strat === 'disj' && c.some(x => used.has(x))) continue;
     const sc = score(c); if (sc.s < seuil) continue;
     if (res.some(g => g.c.filter(x => c.includes(x)).length > 4)) continue;
     c.forEach(x => used.add(x)); res.push({ c, ...sc });
   }
+  res.tronque = (strat === 'disj' && n > 6) ? n : 0;
   if (dreamMode === 'spread') {
     const pool = []; while (pool.length < res.length) pool.push(1, 2, 3, 4, 5);
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0;[pool[i], pool[j]] = [pool[j], pool[i]]; }
@@ -654,9 +686,14 @@ let DERNIER = [];
 document.getElementById('go').onclick = () => {
   const n = Math.max(1, Math.min(30, +nGrilles.value));
   const g = generer(n, +sev.value, strat.value, dreamMode.value); DERNIER = g;
+  const avert = g.tronque
+    ? `<div class="card warn" style="margin-bottom:10px">Vous avez demandé
+       <b>${g.tronque} grilles disjointes</b>. Impossible : 6 grilles de 6 numéros
+       occupent déjà 36 des 40 numéros du jeu. <b>${g.length} grilles</b> générées.
+       Passez en « Indépendantes » pour aller au-delà.</div>` : '';
   const out = document.getElementById('out');
   if (!g.length) { out.innerHTML = '<div class="card warn">Aucune grille trouvée : assouplis la sévérité ou passe en « Indépendantes ».</div>'; return; }
-  let h = `<div class="card"><h2>${g.length} grille(s) — coût ${(g.length * 2.5).toFixed(2)} €</h2>`;
+  let h = avert + `<div class="card"><h2>${g.length} grille(s) — coût ${(g.length * 2.5).toFixed(2)} €</h2>`;
   g.forEach((x, i) => {
     h += `<div class="grille"><div class="balls">${x.c.map(v => `<span class="b${v > 31 ? ' hi' : ''}">${v}</span>`).join('')}
       <span style="color:var(--mut)">·</span><span class="b dream">${x.dream}</span></div>
@@ -665,14 +702,15 @@ document.getElementById('go').onclick = () => {
   });
   const u = new Set(); g.forEach(x => x.c.forEach(v => u.add(v)));
   const disj = strat.value === 'disj' && g.length <= 6;
+  /* PMISE_SANS est tabulée pour des grilles DISJOINTES : ne l'afficher que là. */
   const p1 = disj ? P1_EXACT[g.length - 1] : 1 - Math.pow(1 - PROBA[5] - PROBA[4] - PROBA[3] - PROBA[2] - PROBA[1] - PROBA[0], g.length);
-  const pm = g.length <= 6 ? PMISE_SANS[g.length - 1] : null;
+  const pm = disj ? PMISE_SANS[g.length - 1] : null;
   h += `<div class="meta">Couverture <b>${u.size}/40</b>.
     P(≥1 rang gagnant) = <b>${(100 * p1).toFixed(2)} %</b>
     ${disj ? '<span class="mut">(exact, énumération)</span>' : '<span class="mut">(approx. indépendance)</span>'}.
     ${pm !== null ? `P(récupérer la mise sur un tirage) = <b>${(100 * pm).toFixed(2)} %</b>.` : ''}
     P(rang 1) = ${g.length} sur 19 191 900.
-    <br>Espérance : <b>44,3 %</b> de la mise (nominal) / <b>39,2 %</b> actualisée à 3 %
+    <br>Espérance : <b>44,50 %</b> de la mise (nominal) / <b>39,35 %</b> actualisée à 3 %
     — <b>identique pour toute grille</b>. Perte espérée
     <b>${(g.length * 2.5 * (1 - 0.443116)).toFixed(2)} €</b> par tirage.</div></div>`;
   out.innerHTML = h;
@@ -702,6 +740,20 @@ function tableCourante() {
 if (!RANGS) RANGS = tableCourante();
 
 const save = () => { localStorage.setItem(LS, JSON.stringify(BANK)); localStorage.setItem(LSR, JSON.stringify(RANGS)); };
+/* toISOString() renvoie la date UTC : en Belgique, entre minuit et 1 h ou 2 h,
+   cela enregistrait la VEILLE. On formate en heure locale. */
+/* division sûre : un historique d'une seule ligne, ou une mise nulle, donnait
+   NaN / Infinity dans les KPI. */
+const div = (a, b) => (b ? a / b : null);
+const pcN = v => v === null ? '—' : pc(v);
+const eurN = v => v === null ? '—' : eur(v);
+/* EuroDreams Boost : rente portée de 20 000 à 30 000 €/mois, soit un rang 1 de
+   10,8 M€ au lieu de 7,2 M€. Fenêtre officielle du 02/10/2025 au 09/04/2026,
+   remportée au Portugal. Cela ajoute 7,50 points d'espérance nominale par grille. */
+const BOOST = { deb: '2025-10-02', fin: '2026-04-09', r1: 10800000 };
+const enBoost = d => d >= BOOST.deb && d <= BOOST.fin;
+const dateLocale = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const eur = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 const pc  = v => (100 * v).toFixed(2).replace('.', ',') + ' %';
 const eur0 = v => Math.round(v).toLocaleString('fr-FR') + ' €';
@@ -716,7 +768,7 @@ function majMise() {
 ['bK','bJ','pGrille'].forEach(id => document.getElementById(id).addEventListener('input', majMise));
 
 document.getElementById('bAdd').onclick = () => {
-  const d = bDate.value || new Date().toISOString().slice(0, 10);
+  const d = bDate.value || dateLocale();
   BANK.push({ d, k: +bK.value || 0, j: +bJ.value, g: +bGain.value || 0 });
   BANK.sort((a, b) => a.d < b.d ? -1 : 1); save(); renderBank();
 };
@@ -800,26 +852,34 @@ function renderBank() {
   const med = gains.length % 2 ? gains[(gains.length - 1) / 2] : (gains[gains.length / 2 - 1] + gains[gains.length / 2]) / 2;
   const maxG = Math.max(...gains), iMax = BANK.findIndex(x => x.g === maxG);
   const sansMax = G - maxG, misesSansMax = M - miseDe(BANK[iMax]);
-  const trj = G / M, solde = G - M;
-  const evTot = nED * evED + nJK * evJK;
+  const trj = div(G, M), solde = G - M;
+  /* espérance ligne à ligne : le rang 1 vaut 10,8 M€ pendant le Boost */
+  const evLigne = x => x.k * (evED + (enBoost(x.d) ? PROBA[0] * (BOOST.r1 - RANGS[0]) : 0))
+                     + x.j * evJK;
+  const evTot = BANK.reduce((a, x) => a + evLigne(x), 0);
+  const nBoost = BANK.filter(x => enBoost(x.d)).length;
+  const bonusBoost = BANK.reduce((a, x) => a + (enBoost(x.d) ? x.k * PROBA[0] * (BOOST.r1 - RANGS[0]) : 0), 0);
   const evTotHJ = nED * (evED - PROBA[0] * RANGS[0] - PROBA[1] * RANGS[1]) + nJK * JK_MISE * JK_TRJ_HJ;
   const cls = v => v >= 0 ? 'pos' : 'neg';
   document.getElementById('bKpi').innerHTML = `<h2>Statistiques — ${BANK.length} tirages</h2><div class="kpi">
     <div>Total misé<b>${eur(M)}</b></div>
     <div>Total gagné<b>${eur(G)}</b></div>
     <div>Solde<b class="${cls(solde)}">${solde >= 0 ? '+' : ''}${eur(solde)}</b></div>
-    <div>Taux de retour<b class="${trj >= evTotHJ / M ? 'pos' : 'neg'}">${pc(trj)}</b></div>
+    <div>Taux de retour<b class="${trj !== null && M && trj >= evTotHJ / M ? 'pos' : 'neg'}">${pcN(trj)}</b></div>
     <div>Gain médian<b>${eur(med)}</b></div>
-    <div>Gain moyen<b>${eur(G / BANK.length)}</b></div></div>
+    <div>Gain moyen<b>${eurN(div(G, BANK.length))}</b></div></div>
     <div class="meta">
     Composition : <b>${nED} grilles EuroDreams</b> (${eur(nED * prix)}) +
     <b>${nJK} Joker+</b> (${eur(nJK * JK_MISE)}).<br>
     Attendu <b>${eur(evTot)}</b> avec les gros lots, <b>${eur(evTotHJ)}</b> hors gros lots
-    → ratio observé/attendu <b>${(G / evTotHJ).toFixed(3).replace('.', ',')}</b>.
-    TRJ attendu hors gros lot <b>${pc(evTotHJ / M)}</b> contre <b>${pc(trj)}</b> observé.<br>
-    Plus gros gain <b>${eur(maxG)}</b> = <b>${(100 * maxG / G).toFixed(0)} %</b> du total.
-    Sans lui : ${eur(sansMax)} sur ${eur(misesSansMax)} → <b>${pc(sansMax / misesSansMax)}</b>.<br>
-    <span class="mut">L'écart médiane (${eur(med)}) / moyenne (${eur(G / BANK.length)}) mesure
+    → ratio observé/attendu <b>${div(G, evTotHJ) === null ? '—' : div(G, evTotHJ).toFixed(3).replace('.', ',')}</b>.
+    TRJ attendu hors gros lot <b>${pcN(div(evTotHJ, M))}</b> contre <b>${pcN(trj)}</b> observé.<br>
+    ${nBoost ? `<b>${nBoost} tirage(s) en régime Boost</b> (rente 30 000 €/mois du
+      ${BOOST.deb.split('-').reverse().join('/')} au ${BOOST.fin.split('-').reverse().join('/')}) :
+      <b>+${eur(bonusBoost)}</b> d'espérance nominale que les versions précédentes ignoraient.<br>` : ''}
+    Plus gros gain <b>${eur(maxG)}</b> = <b>${div(100 * maxG, G) === null ? '—' : div(100 * maxG, G).toFixed(0) + ' %'}</b> du total.
+    Sans lui : ${eur(sansMax)} sur ${eur(misesSansMax)} → <b>${pcN(div(sansMax, misesSansMax))}</b>.<br>
+    <span class="mut">L'écart médiane (${eur(med)}) / moyenne (${eurN(div(G, BANK.length))}) mesure
     la dépendance à un seul coup.</span></div>`;
 
   /* ---- courbes ---- */
@@ -833,7 +893,7 @@ function renderBank() {
     const t = simuler(x.k, x.j, nSim);
     for (let s = 0; s < nSim; s++) sims[s] += t[s];
     const srt = Array.from(sims).sort((a, b) => a - b);
-    cumM += miseDe(x); cumEv += x.k * evED + x.j * evJK;
+    cumM += miseDe(x); cumEv += evLigne(x);
     bP5.push(pct(srt, 0.05) - cumM); bP95.push(pct(srt, 0.95) - cumM);
     bEv.push(cumEv - cumM); trjEv.push(100 * cumEv / cumM);
   });
@@ -857,10 +917,17 @@ function renderBank() {
      ${perc > 50 ? '<span class="pos">Au-dessus de la médiane — de la chance, pas de la performance.</span>'
                  : '<span class="neg">En dessous de la médiane.</span>'}<br>
      ${(100 * nul / P.length).toFixed(1)} % des simulations finissent à 0 €.
-     <br><br><b>Lecture.</b> Sur 61 tirages, l'IC à 95 % du taux de retour fait
-     <b>24,6 points</b> de large : il contient aussi bien 26 % que 47 %. Il faudrait
-     <b>~1 530 tirages</b> pour un IC de 5 points. Ce graphique ne peut donc pas
-     démontrer que vous jouez bien ou mal — seulement que vous perdez.
+     <br><br><b>Lecture — corrigé en v6.</b> Les versions précédentes citaient ici un
+     <b>bootstrap</b> des gains observés. Mauvais outil : le bootstrap mesure l'incertitude
+     autour de <i>votre</i> moyenne, il ne teste pas « ce résultat est-il conforme au
+     modèle ». La bonne référence est la loi simulée ci-dessus. Sur elle, votre taux de
+     retour se lit ainsi :<br>
+     médiane <b>${pc(pct(P, 0.5) / M)}</b> · moyenne <b>${pc(P.reduce((a, v) => a + v, 0) / P.length / M)}</b>
+     · IC 90 % <b>[${pc(pct(P, 0.05) / M)} ; ${pc(pct(P, 0.95) / M)}]</b> — contre
+     <b>${pcN(trj)}</b> observé.<br>
+     La moyenne est tirée vers le haut par un jackpot que 61 tirages n'ont aucune chance
+     de voir : c'est la <b>médiane</b> qu'il faut regarder. Ce graphique ne peut pas
+     démontrer que vous jouez bien ou mal — seulement que vous perdez, et de combien.
      <br><span class="mut">Note : les grilles sont simulées indépendamment ; des grilles
      disjointes sont en réalité légèrement anti-corrélées, ce qui resserre un peu
      l'enveloppe intra-tirage sans changer le cumul.</span>`;
@@ -1463,7 +1530,7 @@ function dessiner(cv, serie, bandes, zeroLine, unit) {
   x.fillText(mx.toFixed(0) + (unit || ''), 3, 12); x.fillText(mn.toFixed(0) + (unit || ''), 3, h - 6);
 }
 
-bDate.value = new Date().toISOString().slice(0, 10);
+bDate.value = dateLocale();
 majMise();
 </script>
 </body>

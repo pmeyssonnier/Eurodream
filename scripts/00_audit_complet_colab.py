@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 # ============================================================================
+#  LEGACY — NE PLUS UTILISER TEL QUEL.
+#  Ce script date de la premiere passe, avant l'exploitation des 297 tirages
+#  officiels. Il repose sur la table de gains SUPPOSEE (R3 = 500 EUR, R4 = 20/30,
+#  R5 = 5 fixes) alors que les rangs 3, 4 et 5 sont PARIMUTUELS. Ses TRJ sont donc
+#  faux d'environ 0,3 point. Remplace par les scripts 11 a 19.
+#  Conserve pour tracer l'evolution de l'audit.
+# ============================================================================
+# ============================================================================
 #  AUDIT CONTRADICTOIRE EuroDreams — script unique, copiable dans Google Colab
 #  !pip -q install numpy scipy pandas
 #  Duree ~45 s, RAM ~300 Mo. Toutes les probas de jeu sont EXACTES (enumeration

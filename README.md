@@ -505,3 +505,97 @@ supprimait le point pour tout le monde et multipliait les mises EuroDreams par 1
 Corrigé en tranchant sur la présence d'une virgule. Les résultats des scripts antérieurs
 ne sont pas touchés : ils utilisaient `astype(float)` pour EuroDreams, et les ratios
 pool/mise sont de toute façon invariants d'échelle.
+
+## v6 — deuxième passe : le Boost, la PMF exacte et les bugs applicatifs
+
+### Le mystère des 52 % est clos, et l'explication est exacte au dix-millième
+
+`scripts/19_v6_boost_et_pmf_exacte.py`. Ma formulation précédente — le solde du Fonds de
+Réserve part « en promotions, tirages exceptionnels et provision » — était vague. Le
+mécanisme est arithmétiquement identifiable :
+
+| | part de la mise |
+|---|---|
+| Le Fonds de Réserve reçoit `52 % × 45,21 %` | **23,5092 %** |
+| Les rangs 1-2 en consomment (rente 7,2 M€) | 16,0068 % |
+| **Solde disponible** | **+7,5024 %** |
+| Coût d'un **Boost** (rente portée à 10,8 M€) | **+7,5032 %** |
+| **Écart** | **0,0008 point** |
+
+Le Fonds met de côté, sur chaque tirage ordinaire, exactement ce qu'il faut pour financer
+un tirage Boost. Et en régime Boost :
+`28,4908 % + 1,0004 % + 22,5095 % = ` **52,0007 %**. Les 52 % annoncés ne sont ni un
+arrondi ni une moyenne : c'est le TRJ nominal exact d'un tirage boosté.
+
+**Pourquoi le Boost est invisible dans les fichiers** — 55 tirages belges tombent dans la
+fenêtre du 02/10/2025 au 09/04/2026 ; aucun n'en porte la trace, parce que la colonne du
+lot de rang 1 vaut 0,00 € tant qu'il n'y a pas de gagnant belge, et que les deux seuls
+jackpots belges de l'historique (01/05/2025 et 07/07/2025) sont antérieurs au Boost —
+remporté au Portugal. Mon constat « aucune trace » était exact, mon explication ne l'était
+pas.
+
+### PMF Joker+ : le double comptage est corrigé
+
+La v5 et la première v6 posaient `P(gain de 2 €) = 0,18`. C'est un **double comptage** : un
+ticket peut aligner un chiffre à gauche *et* un à droite. La loi exacte s'obtient en
+énumérant le couple `(L, T)` = chiffres alignés à gauche / à droite :
+
+```
+P(L=l, T=t) = 0,81 × 10^-(l+t)   si l+t ≤ 4   (deux positions bloquantes distinctes)
+            = 0,9 × 10⁻⁵         si l+t = 5   (elles se confondent)
+            = 10⁻⁶               si l = t = 6 (numéro entier)
+```
+
+Somme exacte = 1. Contrôles : `E[nb de lots de rang 7] = 2 × 0,09 = 0,18` (observé
+0,179985 sur 642 M de grilles) **et** `P(le ticket gagne) = 0,19 + 0,81/12 = 25,75 % =
+1 sur 3,883` — le « 1 sur 3,88 » officiel. Les deux lectures sont vraies parce que `P-R7`
+compte des **lots**, pas des tickets. L'espérance ne bouge pas (linéarité) : 46,7555 %
+hors jackpot. Mais la **loi** change — 25 valeurs de gain distinctes au lieu de 12 — et
+donc `PMISE_AVEC` :
+
+| grilles | v5/v6a | v6 exacte |
+|---|---|---|
+| 1 | 9,7460 % | **10,2083 %** |
+| 2 | 3,4799 % | **3,7455 %** |
+| 3 | 1,5052 % | **1,6125 %** |
+| 4 | 1,1807 % | **1,2237 %** |
+
+### Le test des 61 tirages : simulation du modèle, pas bootstrap
+Le bootstrap rééchantillonne les gains observés : il mesure l'incertitude autour de la
+moyenne empirique, pas la conformité au modèle. En simulant 61 tirages **sous le modèle**
+(200 000 réplications) : médiane **28,64 %**, IC 90 % **[22,97 % ; 38,56 %]**, moyenne
+32,00 % (tirée par un jackpot que 61 tirages ne verront pas). Le TRJ observé de 33,06 %
+est au **81ᵉ percentile** — au-dessus de la médiane, donc de la chance. L'ancien « IC de
+24,6 points » répondait à une autre question.
+
+### Puissance du χ² recalibrée
+`scripts/04`. Le poids passé à l'échantillonnage sans remise ne produit pas un ratio de
+fréquence égal à ce poids : le script tabulait la puissance contre une alternative qui
+n'était pas celle annoncée. Les poids sont désormais **calibrés** par dichotomie sur
+200 000 tirages simulés. Puissance sur 297 tirages : 4,8 % (×1,05), **6,0 %** (×1,10),
+9,5 % (×1,20), 38,2 % (×1,50).
+
+### Bankroll : le Boost est pris en compte
+L'espérance est calculée ligne à ligne ; pour un tirage de la fenêtre Boost le rang 1 vaut
+10,8 M€. Sur l'historique de démonstration : **33 tirages en régime Boost, +24,76 €**
+d'espérance nominale que les versions précédentes ignoraient. Cela ne change évidemment
+ni les gains réels ni l'analyse hors jackpot.
+
+### Bugs applicatifs corrigés
+- **`PMISE_SANS` affichée hors de son domaine** : elle est tabulée pour des grilles
+  disjointes ; elle n'apparaît plus en mode « Indépendantes ».
+- **Plus de 6 grilles disjointes** : impossible (6 × 6 = 36 numéros sur 40). Le générateur
+  plafonne explicitement et affiche un avertissement, au lieu de retourner silencieusement
+  moins de grilles que demandé.
+- **`toISOString()`** renvoyait la date UTC : en Belgique, entre minuit et 2 h, la saisie
+  était datée de la veille. Remplacé par un formatage en heure locale.
+- **Divisions par zéro** (historique d'une seule ligne, mise nulle) : helper `div()` qui
+  renvoie `null`, affiché « — ».
+- **Contradiction du générateur** : « l'espérance est identique quelle que soit la grille »
+  est faux avec des rangs parimutuels. Reformulé : la *probabilité de sortir* est identique,
+  l'espérance varie de quelques dixièmes de point selon la popularité.
+- Le `<title>` disait encore « v3 ».
+
+### Scripts marqués LEGACY
+`00_audit_complet_colab.py` (table de gains supposée), `09` et `10` (lecture des chiffres
+Joker+ comme signature humaine, et valorisation du levier). Bandeau en tête de fichier.
