@@ -180,7 +180,22 @@ print(f"    rangs 3-6 {esp:.2%} + rang 2 {P[2]*120000/2.5:.2%} + rang 1 {P[1]*72
       f" = {esp+P[2]*120000/2.5+P[1]*7200000/2.5:.2%} (nominal)")
 print(f"    rente actualisée à 3 % ({pv30:,.0f} €) → {esp+P[2]*120000/2.5+P[1]*pv30/2.5:.2%}"
       .replace(",", " "))
-print(f"    TRJ officiel annoncé : 52,00 %  →  écart de "
-      f"{100*(0.52-(esp+P[2]*120000/2.5+P[1]*7200000/2.5)):.1f} points")
+tot_nom = esp + P[2]*120000/2.5 + P[1]*7200000/2.5
+ecart = 0.52 - tot_nom
+print(f"    TRJ officiel annoncé : 52,00 %  →  écart de {100*ecart:.1f} points")
+print(f"\n  Cet écart n'est PAS inexpliqué — c'est le Fonds de Réserve.")
+print(f"    Le règlement affecte 45,21 % de l'argent des lots (= 52 % des mises)")
+print(f"    au Fonds de Réserve, qui finance les rangs 1-2 et les promotions.")
+print(f"    Il reste donc 52 % × (1 − 45,21 %) = {0.52*(1-0.4521):.4%} pour les rangs 3-6,")
+print(f"    et je mesure {esp:.4%} : concordance à {100*abs(0.52*(1-0.4521)-esp):.3f} point.")
+print(f"    Le Fonds reçoit 52 % × 45,21 % = {0.52*0.4521:.4%} de la mise alors que")
+print(f"    l'espérance des rangs 1-2 n'en consomme que "
+      f"{P[1]*7200000/2.5+P[2]*120000/2.5:.4%} : le solde de {100*ecart:.2f} points")
+print(f"    part en tirages exceptionnels, promotions et provision. Les 52 % sont")
+print(f"    exacts au niveau de la FAMILLE de jeux, faux pour un tirage ordinaire.")
+print(f"    (Note : aucune trace d'une promotion de type « EuroDreams Boost » dans")
+print(f"     ces fichiers — le rang 1 vaut toujours 7 200 000 €, le rang 2 toujours")
+print(f"     120 000 €, et la part 3-6 ne s'écarte jamais de plus de 1,5 point de sa")
+print(f"     médiane. Ce qui est cohérent avec un financement hors table de gains.)")
 df.to_csv("out/eurodreams_analyse.csv", index=False)
 print("\n→ out/eurodreams_analyse.csv")

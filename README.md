@@ -436,3 +436,72 @@ point** (signe + chiffres) à **+0,436 point** (signe seul). Ce que l'objection 
 touche pas : la sur-dispersion EuroDreams (Var(z) = 54,22 au rang 6), où les numéros
 sont bien cochés par le joueur — elle la renforce, en faisant du Joker+ à Var(z) = 2,20
 un témoin propre de ce que donne un jeu à grilles non choisies.
+
+## v6 — audit correctif (`eurodreams_v6.html`, `scripts/18_v6_modele_exact.py`)
+
+La v5 reste en place comme référence. La v6 reprend cinq points un par un ; deux de mes
+chiffres tombent, un troisième est requalifié.
+
+### 1. Les 52 % et le Fonds de Réserve
+Porté dans `README`, `eurodreams_v6.html`, `scripts/14` et `scripts/00`. Le règlement
+affecte 45,21 % de l'argent des lots (= 52 % des mises) au Fonds de Réserve, qui finance
+les rangs 1-2 et les promotions ; il reste `52 % × (1 − 45,21 %) = 28,4908 %` pour les
+rangs 3-6, contre **28,4623 %** mesurés — 0,028 point d'écart. Le solde de **7,50 points**
+part en tirages exceptionnels et provision. Sur **EuroDreams Boost** : aucune trace dans
+les fichiers financiers (rang 1 toujours 7 200 000 €, rang 2 toujours 120 000 €, part 3-6
+jamais à plus de 1,5 point de sa médiane), ce qui est cohérent avec un financement hors
+table de gains, mais je ne peux pas le vérifier — l'accès à `loterie-nationale.be` est
+bloqué depuis cet environnement.
+
+### 2. PMF Joker+ refaite depuis les règles
+Plus aucun paramètre ajusté. Lots fixes vérifiés sur 5 057 tirages ; loi
+`p(k) = 2 × 0,9 × 10⁻ᵏ` confrontée rang par rang. **Découverte au passage :** la lecture
+combinatoire stricte — un seul lot par ticket, `P(max(L,T) = 1) = 0,1701` — est **rejetée
+à 667 σ** au rang 7, où l'on observe 0,17999. Un ticket qui aligne un chiffre à *chaque*
+extrémité est payé **deux fois**. À k = 6 les deux lectures se confondent, d'où
+`P(R1) = 1/12 000 000` et `P(R2) = 11/12 × 10⁻⁶` (57 jackpots observés contre 53,5
+attendus, p = 0,67 ; 610 rangs 2 contre 588,6, p = 0,39). Le lot « signe » de 1,50 € est
+cumulatif : `P(R8)` observée = 0,083311 contre 1/12 = 0,083333, et non 0,0667.
+**Contrôle du modèle : 46,7555 % prédits hors jackpot contre 46,8010 % réellement versés
+sur 963 M€ — 0,045 point d'écart.** Pente de cagnotte `10⁻⁶/12 ÷ 1,50 €` =
+**5,5556 points par million**, seuil d'espérance nulle **9 584 002 €**, tranches et
+`PMISE_AVEC` recalculés sur cette PMF (les `PMISE` ne bougent pas : le jackpot est trop
+rare pour peser sur un seuil « gain ≥ mise »).
+
+### 3. Popularité des chiffres supprimée, vrai modèle de co-gagnants pour le signe
+Le +0,436 / +0,572 point est retiré. Modèle exact, puisque tout y est connu — le signe est
+choisi, les chiffres non, et le rang 1 est le seul lot partagé :
+`K ~ Poisson(λ)`, `λ = n × 10⁻⁶ × q(signe)`, gain `J/(1+K)`, avec n = 139 883 grilles par
+tirage (médiane) et q mesurée sur le rang 8. Résultat : λ ≈ **0,011**, donc
+`E[1/(1+K)]` varie de 0,994679 (Capricorne) à 0,993553 (Lion).
+**Valeur réelle du levier : +0,0050 point** de TRJ (Capricorne contre Lion) à la cagnotte
+médiane, +0,0197 point au record historique. L'ancien chiffre divisait la cagnotte par le
+nombre *attendu* de gagnants comme s'il y en avait toujours plusieurs. Contrôle : **un
+seul jackpot partagé sur 57** en seize ans, là où ce modèle en attend 0,66.
+
+### 4. Le +3,17 point EuroDreams requalifié
+Ce n'est pas une borne de levier mais une **amplitude empirique constatée a posteriori** :
+elle décrit combien le TRJ d'un *tirage* varie selon l'affluence sur *les numéros sortis*,
+et le décile ne se choisit pas. Ce que les données permettent en revanche, c'est
+d'estimer le modèle hiérarchique `W_r | tirage ~ Binomiale(n, p_r × M_r)`, d'où
+`Var(z) ≈ 1 + n·p·Var(M)` :
+
+| rang | gagnants attendus | Var(z) | écart-type de M |
+|---|---|---|---|
+| Rang 6 — 2 n° | 34 340 | 54,22 | **3,9 %** |
+| Rang 5 — 3 n° | 5 908 | 33,49 | **7,4 %** |
+| Rang 4 — 4 n° | 415 | 8,31 | **13,3 %** |
+| Rang 3 — 5 n° | 10 | 1,85 | **29,1 %** |
+
+**Ce qui manque** pour un modèle prédictif grille → co-gagnants : les 297 combinaisons
+tirées (6 numéros + Dream), absentes des fichiers financiers. Il faudrait les
+`eurodreams-gamedata-FR-2023…2026.csv`, pendant EuroDreams des `jokerplusgamedata` déjà
+fournis.
+
+### Bug corrigé au passage
+Les CSV EuroDreams utilisent le **point** décimal (`579917.50`), les CSV Joker+ la
+**virgule** avec point de milliers (`2.000,00`). Le lecteur commun de `scripts/18`
+supprimait le point pour tout le monde et multipliait les mises EuroDreams par 100.
+Corrigé en tranchant sur la présence d'une virgule. Les résultats des scripts antérieurs
+ne sont pas touchés : ils utilisaient `astype(float)` pour EuroDreams, et les ratios
+pool/mise sont de toute façon invariants d'échelle.

@@ -58,8 +58,14 @@ print(f"\n  Decomposition (nominal, R4=20) — part de chaque rang dans l'espera
 for r, g in (("R1",20000*12*30),("R2",120000),("R3",500),("R4",20),("R5",5),("R6",2.5)):
     print(f"    {r} : {P[r]*g:8.4f} EUR = {P[r]*g/EV_G:6.2%}")
 print(f"  TRJ moyen = {EV_G/MISE_G:.2%} | TRJ HORS jackpot = {EV_NR1/MISE_G:.2%}")
-print(f"  TRJ officiel annonce = 52,00 % -> ECART NON EXPLIQUE de "
-      f"{0.52-EV_G/MISE_G:.1%} pt (voir commentaire).")
+print(f"  TRJ officiel annonce = 52,00 % -> ecart de {0.52-EV_G/MISE_G:.1%} pt.")
+print(f"  Cet ecart est STRUCTUREL, pas inexplique : le reglement affecte 45,21 %")
+print(f"  de l'argent des lots (= 52 % des mises) au Fonds de Reserve, qui finance")
+print(f"  les rangs 1-2 et les promotions. Il reste 52 % x (1 - 45,21 %) = "
+      f"{0.52*(1-0.4521):.4%}")
+print(f"  pour les rangs 3-6, contre {EV_NR1/MISE_G:.4%} calcules ici sur la table")
+print(f"  SUPPOSEE (28,44 % avec la table REELLE, cf. script 14). Les 52 % sont")
+print(f"  exacts au niveau de la famille de jeux, faux pour un tirage ordinaire.")
 seuil = (MISE_G - (EV_G - P["R1"]*20000*12*30))/P["R1"]
 print(f"  Jackpot (valeur actuelle) requis pour EV>=mise : {seuil:,.0f} EUR".replace(",", " "))
 
